@@ -1,0 +1,1047 @@
+<title>PetMe Tank Care</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: a single mobile app column (max 560px) with a fixed bottom dock, after the Stitch "Oceanic Telemetry Console" system. Deliberately dark-only. */
+:root {
+  color-scheme: dark;
+  --bg: #061426;
+  --s-low: #0e1c2f;
+  --s: #132033;
+  --s-high: #1d2a3e;
+  --s-top: #28354a;
+  --ink: #d6e3fe;
+  --ink-2: #bacac9;
+  --muted: #94A3B8;
+  --faint: #64748B;
+  --line: rgba(56, 189, 248, 0.16);
+  --line-2: rgba(148, 163, 184, 0.2);
+  --hair: rgba(255, 255, 255, 0.06);
+  --primary: #00D2D3;
+  --primary-hi: #48efef;
+  --on-primary: #061426;
+  --primary-tint: rgba(0, 210, 211, 0.1);
+  --tertiary: #38BDF8;
+  --tert-tint: rgba(56, 189, 248, 0.12);
+  --glass: rgba(30, 62, 98, 0.25);
+  --glass-2: rgba(30, 62, 98, 0.5);
+  --ok: #10B981;
+  --warn: #F59E0B;
+  --crit: #F43F5E;
+  --head: "Space Grotesk", "Avenir Next", system-ui, sans-serif;
+  --body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--bg); }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(92px + env(safe-area-inset-bottom, 0px));
+}
+.app { max-width: 560px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--head); margin: 0; text-wrap: balance; }
+h1 { font-size: 26px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; }
+h2 { font-size: 19px; line-height: 26px; font-weight: 600; letter-spacing: -0.01em; }
+h3 { font-size: 16px; line-height: 22px; font-weight: 600; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--primary); }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lbl.cy { color: var(--primary); }
+.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ic.sm { width: 16px; height: 16px; }
+
+/* app bar */
+.appbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px 10px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--primary); font-family: var(--head); font-weight: 700; font-size: 19px; }
+.brand .mark { width: 32px; height: 32px; border-radius: 6px; background: var(--s-high); border: 1px solid var(--line); display: grid; place-items: center; color: var(--primary); }
+.brand small { display: flex; align-items: center; gap: 5px; font-family: var(--body); font-weight: 500; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
+.avatar { width: 36px; height: 36px; border-radius: 8px; background: var(--s-top); border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--head); font-weight: 600; color: var(--ink); position: relative; }
+.avatar::after { content: ""; position: absolute; right: -3px; bottom: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--tertiary); border: 2px solid var(--bg); }
+
+/* panels */
+.view { display: grid; gap: 16px; padding-top: 6px; }
+.panel { background: var(--glass); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.panel.flat { background: var(--s-low); }
+.sec-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.sec-h h2 { display: flex; align-items: center; gap: 8px; }
+.sec-h h2 .ic { color: var(--primary); }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--primary-tint); color: var(--primary); white-space: nowrap; font-family: var(--body); }
+.badge.ok { color: var(--ok); background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.35); }
+.badge.warn { color: var(--warn); background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.35); }
+.badge.crit { color: var(--crit); background: rgba(244,63,94,.1); border-color: rgba(244,63,94,.35); }
+.badge.slate { color: var(--muted); background: rgba(148,163,184,.08); border-color: var(--line-2); }
+.badge.tert { color: var(--tertiary); background: var(--tert-tint); border-color: rgba(56,189,248,.35); }
+.badge.dash { background: transparent; border-style: dashed; color: var(--muted); border-color: var(--line-2); }
+.fine { font-size: 12px; color: var(--muted); }
+.err { color: var(--crit); font-size: 13px; min-height: 1em; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--primary); background: var(--primary); color: var(--on-primary); border-radius: 4px; padding: 12px 16px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 14px; }
+.btn:hover { box-shadow: 0 0 0 3px rgba(0,210,211,.15), 0 8px 24px rgba(0,210,211,.15); }
+.btn:disabled { opacity: .5; cursor: default; box-shadow: none; }
+.btn.sec { background: transparent; color: var(--primary); border-color: rgba(0,210,211,.4); }
+.btn.sec:hover { background: var(--primary-tint); box-shadow: none; }
+.btn.ghost { background: var(--s-high); color: var(--primary); border-color: transparent; }
+.btn.danger { background: rgba(244,63,94,.08); color: var(--crit); border-color: rgba(244,63,94,.5); }
+.btn.plain { background: transparent; border-color: transparent; color: var(--muted); padding-inline: 8px; }
+.btn.sm { padding: 7px 11px; font-size: 13px; }
+.btn.block { width: 100%; }
+
+/* tank hero */
+.hero { border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--s-low); }
+.tankart { position: relative; aspect-ratio: 5 / 2; max-width: 100%; background: linear-gradient(180deg, #0c3a57 0%, #082a42 55%, #061f33 100%); }
+.tankart svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tankart .tags { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 8px; }
+.tankart .tags .badge { background: rgba(6,20,38,.7); }
+.hero-body { padding: 14px 16px 16px; display: grid; gap: 4px; }
+.hero-body h1 { font-size: 24px; line-height: 30px; }
+.hero-sub { color: var(--muted); font-size: 13px; }
+.hero-row { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; font-size: 12px; color: var(--ink-2); }
+.hero-row b { color: var(--tertiary); font-weight: 500; }
+
+/* metrics */
+.metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.metric { background: var(--s); border: 1px solid var(--hair); border-radius: 8px; padding: 12px; display: grid; gap: 6px; min-width: 0; }
+.metric-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; }
+.metric-top .badge { padding: 3px 6px; }
+.metric-val { font-family: var(--head); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+.metric-val.ok { color: var(--primary-hi); }
+.metric-val.warn { color: var(--warn); }
+.metric-val.crit { color: var(--crit); }
+.metric-val small { font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 3px; letter-spacing: 0; }
+.metric .tgt { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+/* lists */
+.rowlist { display: grid; }
+.item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--hair); min-width: 0; }
+.item:first-child { border-top: 0; }
+.thumb { width: 52px; height: 52px; border-radius: 6px; background: var(--s-high); display: grid; place-items: center; flex: none; border: 1px solid var(--hair); }
+.thumb svg { width: 40px; height: 28px; }
+.item-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.item-main b { font-family: var(--head); font-weight: 600; font-size: 15px; }
+.item-main span { font-size: 12px; color: var(--muted); }
+.item-side { display: grid; justify-items: end; gap: 4px; text-align: right; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.chips button { flex: none; border: 1px solid var(--line-2); background: var(--s-low); color: var(--ink-2); border-radius: 4px; padding: 7px 13px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.chips button[aria-pressed="true"] { background: var(--tertiary); color: var(--on-primary); border-color: var(--tertiary); font-weight: 600; }
+
+/* booking */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); background: var(--bg); border: 1px solid var(--line-2); border-radius: 6px; padding: 3px; gap: 3px; }
+.seg label { position: relative; display: block; text-align: center; padding: 8px 4px; border-radius: 4px; cursor: pointer; font-size: 12.5px; color: var(--ink-2); min-width: 0; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--glass-2); box-shadow: 0 0 0 1px rgba(0,210,211,.45) inset; color: var(--ink); font-weight: 600; }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 1px; }
+.seg small { display: block; font-size: 10px; color: var(--muted); font-weight: 400; }
+.svc { position: relative; display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass); cursor: pointer; }
+.svc input { position: absolute; opacity: 0; pointer-events: none; }
+.svc:has(input:checked) { border-color: var(--primary); background: rgba(30,62,98,.45); box-shadow: 0 8px 32px rgba(0,210,211,.08); }
+.svc:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+.svc-top { display: flex; align-items: flex-start; gap: 10px; }
+.svc-top .ic { color: var(--tertiary); margin-top: 2px; }
+.svc-name { flex: 1; min-width: 0; }
+.svc-name b { font-family: var(--head); font-size: 16px; font-weight: 600; display: block; }
+.svc-name span { font-size: 11px; color: var(--muted); }
+.radio { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--outline, #3b4949); background: var(--s-top); display: grid; place-items: center; flex: none; }
+.svc:has(input:checked) .radio { background: var(--tertiary); border-color: var(--tertiary); color: var(--on-primary); }
+.radio .ic { width: 13px; height: 13px; stroke-width: 3; opacity: 0; color: var(--on-primary); margin: 0; }
+.svc:has(input:checked) .radio .ic { opacity: 1; }
+.svc p { font-size: 13px; color: var(--ink-2); }
+.svc-foot { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border-radius: 4px; padding: 8px 10px; }
+.svc-foot .dur { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.svc-foot .price { font-family: var(--head); font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+.days { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; }
+.day { position: relative; flex: none; width: 58px; text-align: center; border: 1px solid var(--line-2); border-radius: 6px; padding: 8px 0 7px; background: var(--s-low); cursor: pointer; display: grid; gap: 2px; }
+.day input { position: absolute; opacity: 0; pointer-events: none; }
+.day .dw { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.day .dn { font-family: var(--head); font-size: 20px; font-weight: 600; }
+.day .dm { font-size: 10px; color: var(--muted); }
+.day:has(input:checked) { background: var(--secondary, #1E3E62); border-color: var(--primary); }
+.day:has(input:checked) .dw { color: var(--primary); }
+.day:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 1px; }
+.wins { display: grid; gap: 8px; }
+.win { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--s-low); cursor: pointer; }
+.win input { position: absolute; opacity: 0; pointer-events: none; }
+.win .ic { color: var(--tertiary); }
+.win b { font-family: var(--head); font-weight: 600; font-size: 15px; display: block; }
+.win span { font-size: 11px; color: var(--muted); }
+.win > div { flex: 1; min-width: 0; }
+.win:has(input:checked) { border-color: var(--primary); background: rgba(30,62,98,.4); }
+.win:has(input:checked) .radio { background: var(--tertiary); border-color: var(--tertiary); }
+.win:has(input:checked) .radio .ic { opacity: 1; }
+.win:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+.two { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+input[type=text], input[type=tel], input[type=number], input[type=email], select, textarea {
+  width: 100%; min-width: 0; background: rgba(11,25,44,.6); border: 1px solid var(--line-2); border-radius: 4px; padding: 10px 12px; color: #F8FAFC;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary) inset; }
+::placeholder { color: var(--faint); }
+textarea { min-height: 84px; resize: vertical; }
+.check { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--hair); cursor: pointer; font-size: 13px; }
+.check input { width: 16px; height: 16px; accent-color: var(--primary); flex: none; }
+.ledger { display: grid; gap: 7px; font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ledger .r { display: flex; justify-content: space-between; gap: 10px; }
+.ledger .r.disc { color: var(--tertiary); }
+.ledger .tot { border-top: 1px solid var(--hair); margin-top: 6px; padding-top: 12px; display: flex; align-items: end; justify-content: space-between; gap: 10px; font-family: var(--body); }
+.ledger .tot b { font-family: var(--head); font-size: 15px; display: block; }
+.ledger .tot span { font-size: 11px; color: var(--muted); }
+.ledger .tot .amt { font-family: var(--mono); font-size: 26px; font-weight: 600; color: var(--ink); }
+.wish { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* history + report */
+.job { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass); min-width: 0; }
+button.job { text-align: left; cursor: pointer; width: 100%; color: inherit; }
+button.job:hover { border-color: rgba(0,210,211,.45); }
+.job-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.job-head h3 { margin-right: auto; }
+.kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; font-size: 13px; }
+.kv span { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kv div { min-width: 0; overflow-wrap: anywhere; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--hair); border-radius: 6px; overflow: hidden; }
+.tile { padding: 10px; border-right: 1px solid var(--hair); min-width: 0; display: grid; gap: 3px; }
+.tile:last-child { border-right: 0; }
+.tile b { font-family: var(--head); font-size: 17px; font-variant-numeric: tabular-nums; }
+.tile small { font-size: 11px; color: var(--muted); }
+.task { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--hair); }
+.task:first-child { border-top: 0; }
+.tick { width: 20px; height: 20px; border-radius: 4px; border: 1.5px solid var(--line-2); display: grid; place-items: center; flex: none; }
+.tick.on { background: var(--tertiary); border-color: var(--tertiary); color: var(--on-primary); }
+.tick .ic { width: 14px; height: 14px; stroke-width: 3; }
+.task b { font-family: var(--head); font-weight: 600; font-size: 14px; }
+.quote { border-left: 2px solid var(--primary); padding: 2px 0 2px 12px; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+.back { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; color: var(--primary); cursor: pointer; padding: 4px 0; font-weight: 500; }
+
+/* livestock recs */
+.rec { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--glass); }
+.rec-top { display: flex; gap: 12px; }
+.rec-top .thumb { width: 84px; height: 84px; }
+.rec-top .thumb svg { width: 60px; height: 40px; }
+.rec-top > div { min-width: 0; flex: 1; display: grid; gap: 2px; align-content: start; }
+.sci { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rec h3 { font-size: 18px; }
+.rec p { font-size: 13px; color: var(--ink-2); }
+.facts { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* pro */
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--s); border: 1px solid var(--hair); border-radius: 8px; padding: 12px; min-width: 0; }
+.stat b { display: block; font-family: var(--head); font-size: 22px; font-variant-numeric: tabular-nums; color: var(--primary-hi); }
+.stat span { font-size: 11px; color: var(--muted); }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.acts .money { margin-right: auto; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.acts .money b { color: var(--ink); font-weight: 600; }
+.complete { display: grid; gap: 10px; border-top: 1px solid var(--hair); padding-top: 12px; }
+.readings { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.empty { border: 1px dashed var(--line-2); border-radius: 8px; padding: 22px 16px; display: grid; gap: 10px; justify-items: start; }
+.empty p { color: var(--muted); }
+.note { font-size: 13px; background: var(--bg); border-radius: 4px; padding: 8px 10px; overflow-wrap: anywhere; color: var(--ink-2); }
+
+/* dock */
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: rgba(6,20,38,.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--line);
+  padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+.dock nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.dock a { display: grid; justify-items: center; gap: 3px; padding: 6px 2px; color: var(--muted); text-decoration: none; font-size: 11px; border-radius: 8px; text-align: center; line-height: 1.15; }
+.dock a[aria-current="page"] { color: var(--primary); }
+.dock a[aria-current="page"] .ic { filter: drop-shadow(0 0 6px rgba(0,210,211,.5)); }
+#toast { position: fixed; left: 0; right: 0; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); z-index: 6; display: grid; justify-items: center; pointer-events: none; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
+#toast div { background: var(--s-top); color: var(--ink); border: 1px solid var(--primary); padding: 9px 14px; border-radius: 6px; font-size: 13px; max-width: 420px; box-shadow: 0 20px 48px rgba(0,0,0,.6); }
+@media (prefers-reduced-motion: no-preference) {
+  .live .dot { animation: ping 2s ease-in-out infinite; }
+  @keyframes ping { 50% { opacity: .35; } }
+}
+</style>
+
+<div class="app">
+  <header class="appbar">
+    <a class="brand" href="#tanks" aria-label="PetMe home">
+      <span class="mark" id="brandMark"></span>
+      <span>PetMe<small class="live" id="syncLine"><span class="dot"></span><span id="syncText">Connecting</span></small></span>
+    </a>
+    <div class="avatar" title="Your account">Me</div>
+  </header>
+
+  <main id="v-tanks" class="view"></main>
+  <main id="v-book" class="view" hidden></main>
+  <main id="v-history" class="view" hidden></main>
+  <main id="v-livestock" class="view" hidden></main>
+  <main id="v-pro" class="view" hidden></main>
+</div>
+
+<div class="dock"><nav aria-label="Main" id="dock"></nav></div>
+<div id="toast" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var SVGNS = "http://www.w3.org/2000/svg";
+
+  /* ---------- tiny DOM helpers ---------- */
+  function el(tag, props) {
+    var e = document.createElement(tag);
+    props = props || {};
+    Object.keys(props).forEach(function (k) {
+      var v = props[k];
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k.indexOf("on") === 0 && typeof v === "function") e.addEventListener(k.slice(2), v);
+      else if (v === true) e.setAttribute(k, "");
+      else if (v !== false && v != null) e.setAttribute(k, v);
+    });
+    for (var i = 2; i < arguments.length; i++) {
+      [].concat(arguments[i]).forEach(function (c) {
+        if (c == null || c === false) return;
+        e.append(c.nodeType ? c : document.createTextNode(String(c)));
+      });
+    }
+    return e;
+  }
+  var IC = {
+    waves: '<path d="M3 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+    cal: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    fish: '<path d="M3 12c3-5 9-6 13-2l5-3v10l-5-3c-4 4-10 3-13-2z"/><path d="M8 11.2v.1"/>',
+    pro: '<rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 3.5h6v3H9zM8.5 13l2.2 2.2 4.6-4.6"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    back: '<path d="M15 5l-7 7 7 7"/>',
+    chev: '<path d="M9 5l7 7-7 7"/>',
+    sunrise: '<path d="M4 18h16M7 18a5 5 0 0 1 10 0M12 5v4M5.5 10l1.5 1.5M18.5 10L17 11.5"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
+    moon: '<path d="M19 14.5A7.5 7.5 0 1 1 9.5 5a6 6 0 0 0 9.5 9.5z"/>',
+    flask: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 15h9"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+    pin: '<path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/>',
+    note: '<path d="M6 3.5h9l4 4v13H6z"/><path d="M9 11h7M9 15h7"/>',
+    drop: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+    bolt: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
+    truck: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17" cy="17.5" r="1.5"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/>',
+    tank: '<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M3 9h18M7 17v3M17 17v3"/>',
+    signal: '<path d="M5 12a7 7 0 0 1 14 0M8 12a4 4 0 0 1 8 0"/><circle cx="12" cy="12" r="1"/>'
+  };
+  function icon(name, cls) {
+    var s = document.createElementNS(SVGNS, "svg");
+    s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("class", "ic " + (cls || "")); s.setAttribute("aria-hidden", "true");
+    s.innerHTML = IC[name] || "";
+    return s;
+  }
+  function svgFrom(markup, vb) {
+    var s = document.createElementNS(SVGNS, "svg");
+    s.setAttribute("viewBox", vb); s.setAttribute("aria-hidden", "true"); s.innerHTML = markup; return s;
+  }
+  function critter(kind, color) {
+    if (kind === "inv") return svgFrom('<path d="M10 26c-4-8 2-18 14-18s18 8 14 16" fill="none" stroke="' + color + '" stroke-width="3" stroke-linecap="round"/><path d="M12 24c4 3 20 3 24 0" fill="none" stroke="' + color + '" stroke-width="3" stroke-linecap="round"/><path d="M38 12l6-6M34 9l3-7" stroke="' + color + '" stroke-width="2" stroke-linecap="round"/>', "0 0 48 32");
+    return svgFrom('<path d="M4 16c6-10 20-12 28-4l10-6v20l-10-6c-8 8-22 6-28-4z" fill="' + color + '"/><circle cx="13" cy="14" r="1.8" fill="#061426"/>', "0 0 48 32");
+  }
+  function money(n) {
+    var neg = n < 0; n = Math.abs(n);
+    var s = "$" + n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return neg ? "−" + s : s;
+  }
+  function money0(n) { return "$" + Math.round(n).toLocaleString("en-CA"); }
+  function round2(n) { return Math.round(n * 100) / 100; }
+  function by(list, id) { return list.filter(function (x) { return x.id === id; })[0]; }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function todayIso() { return iso(new Date()); }
+  function fmtDate(s, opt) { try { return new Date(s + "T12:00:00").toLocaleDateString("en-CA", opt || { weekday: "short", month: "short", day: "numeric" }); } catch (e) { return s; } }
+  function fmtDur(h) { var m = Math.round(h * 60), hh = Math.floor(m / 60), mm = m % 60; return (hh ? hh + " h" : "") + (hh && mm ? " " : "") + (mm ? mm + " min" : ""); }
+
+  /* ---------- business model (starter assumptions) ---------- */
+  var SIZES = [
+    { id: "s", name: "Up to 30", short: "≤30", sub: "gal" },
+    { id: "m", name: "31 to 75", short: "31–75", sub: "gal" },
+    { id: "l", name: "76 to 150", short: "76–150", sub: "gal" },
+    { id: "xl", name: "Over 150", short: "150+", sub: "gal" }
+  ];
+  var TYPES = [
+    { id: "fresh", name: "Freshwater", mult: 1, chem: "fresh" },
+    { id: "planted", name: "Planted", mult: 1.1, chem: "fresh" },
+    { id: "salt", name: "Saltwater reef", mult: 1.4, chem: "salt" }
+  ];
+  var SERVICES = [
+    { id: "clean", icon: "drop", name: "Routine maintenance", tag: "Water change and full tank care", blurb: "Water test, 20 to 30% water change, glass and decor clean, filter media rinse, equipment check.", base: { s: 85, m: 120, l: 180, xl: 260 }, hours: { s: 1.25, m: 1.75, l: 2.5, xl: 3.5 }, typeMult: true },
+    { id: "consult", icon: "flask", name: "Water chemistry and advice", tag: "Full test and a written plan", blurb: "In-home assessment, full water test, stocking and care advice, then a written plan for your tank.", base: { s: 79, m: 79, l: 79, xl: 79 }, hours: { s: 1, m: 1, l: 1, xl: 1 }, typeMult: false },
+    { id: "setup", icon: "tank", name: "New tank setup", tag: "From empty stand to cycling tank", blurb: "Placement and leveling, equipment, filling, aquascape, and a cycling plan before fish go in.", base: { s: 180, m: 260, l: 380, xl: 560 }, hours: { s: 2.5, m: 3.5, l: 5, xl: 7 }, typeMult: true },
+    { id: "move", icon: "truck", name: "Tank move", tag: "Livestock kept safe the whole way", blurb: "Bag livestock in tank water, drain and pack, transport, re-level and refill at the new address.", base: { s: 280, m: 380, l: 520, xl: 760 }, hours: { s: 3, m: 4, l: 6, xl: 8 }, typeMult: true },
+    { id: "emergency", icon: "bolt", name: "Emergency visit", tag: "Leaks, crashes, failed equipment", blurb: "Same or next day. Stop the problem, test the water, move livestock to safety if needed.", base: { s: 150, m: 170, l: 200, xl: 240 }, hours: { s: 1.5, m: 1.5, l: 1.5, xl: 1.5 }, typeMult: false }
+  ];
+  var TASKS = {
+    clean: ["Water test: ammonia, nitrite, nitrate, pH", "Partial water change, 20 to 30%", "Glass, decor and gravel cleaning", "Filter media rinse in tank water", "Equipment check: heater, pumps, lights", "Livestock health check"],
+    consult: ["Tank and equipment review", "Full water test", "Stocking and feeding discussion", "Written care plan sent"],
+    setup: ["Site check: level floor, power, stand", "Tank and equipment placement", "Fill and condition water", "Filter, heater and lighting set up", "Aquascape", "Cycling plan explained"],
+    move: ["Livestock bagged in tank water", "Drain, pack equipment, save water", "Transport to new address", "Re-level and refill", "Equipment restart and leak check", "Livestock acclimated"],
+    emergency: ["Find and stop the problem", "Emergency water test", "Livestock moved to safety if needed", "Repair or replace equipment", "Follow-up plan agreed"]
+  };
+  var SALT_TASKS = ["Protein skimmer cup cleaned", "Salinity checked and topped off"];
+  var RECUR = [
+    { id: "once", name: "One visit", sub: "No plan", disc: 0, perMonth: 0 },
+    { id: "w4", name: "Every 4 wks", sub: "8% off", disc: 0.08, perMonth: 13 / 12 },
+    { id: "w2", name: "Every 2 wks", sub: "12% off", disc: 0.12, perMonth: 26 / 12 }
+  ];
+  var WINDOWS = [
+    { id: "am", icon: "sunrise", name: "9:00 AM – 12:00 PM", sub: "Morning window" },
+    { id: "mid", icon: "sun", name: "12:00 PM – 3:00 PM", sub: "Midday window" },
+    { id: "pm", icon: "moon", name: "3:00 PM – 6:00 PM", sub: "Late afternoon window" }
+  ];
+  var CITIES = {
+    "Toronto": "A", "Mississauga": "A", "Vaughan": "A", "Markham": "A", "Richmond Hill": "A",
+    "Brampton": "B", "Oakville": "B", "Burlington": "B", "Milton": "B", "Pickering": "B", "Ajax": "B", "Whitby": "B", "Aurora": "B", "Newmarket": "B",
+    "Oshawa": "C", "Whitchurch-Stouffville": "C", "King": "C", "Halton Hills": "C"
+  };
+  var ZONE_FEE = { A: 0, B: 25, C: 45 }, ZONE_COST = { A: 12, B: 18, C: 24 };
+  var HST = 0.13, LABOUR = 32, SUPPLY = 0.10;
+
+  /* water chemistry: [optimal lo, optimal hi, watch lo, watch hi] */
+  var METRICS = [
+    { id: "temp", label: "Temp", unit: "°C", dec: 1, fresh: [24, 27, 22, 29], salt: [24.5, 26.5, 23.5, 27.5] },
+    { id: "ph", label: "pH level", unit: "", dec: 2, fresh: [6.5, 7.8, 6, 8.2], salt: [8, 8.4, 7.8, 8.5] },
+    { id: "sal", label: "Salinity", unit: "SG", dec: 3, salt: [1.024, 1.026, 1.022, 1.027] },
+    { id: "alk", label: "Alkalinity", unit: "dKH", dec: 1, salt: [7, 11, 6, 12] },
+    { id: "ca", label: "Calcium", unit: "ppm", dec: 0, salt: [400, 450, 380, 480] },
+    { id: "nh3", label: "Ammonia", unit: "ppm", dec: 2, fresh: [0, 0.02, 0, 0.25], salt: [0, 0.02, 0, 0.1] },
+    { id: "no2", label: "Nitrite", unit: "ppm", dec: 2, fresh: [0, 0.02, 0, 0.25], salt: [0, 0.05, 0, 0.2] },
+    { id: "no3", label: "Nitrate", unit: "ppm", dec: 0, fresh: [0, 40, 0, 80], salt: [1, 15, 0, 30] }
+  ];
+  function chemOf(type) { return (by(TYPES, type) || TYPES[0]).chem; }
+  function metricsFor(type) { var c = chemOf(type); return METRICS.filter(function (m) { return m[c]; }); }
+  function judge(m, v, type) {
+    var r = m[chemOf(type)];
+    if (v >= r[0] && v <= r[1]) return { cls: "ok", label: "Optimal" };
+    if (v >= r[2] && v <= r[3]) return { cls: "warn", label: "Watch" };
+    return { cls: "crit", label: "Act now" };
+  }
+  var SAMPLE_READINGS = {
+    salt: { temp: 25.6, ph: 8.21, sal: 1.025, alk: 8.6, ca: 430, nh3: 0, no2: 0, no3: 6 },
+    fresh: { temp: 25.2, ph: 7.2, nh3: 0, no2: 0, no3: 22 }
+  };
+
+  /* livestock: sample current stock and ideas */
+  var STOCK = {
+    salt: [
+      { name: "Ocellaris clownfish", kind: "fish", qty: 2, role: "Hosts near the rockwork", color: "#F97316" },
+      { name: "Yellow watchman goby", kind: "fish", qty: 1, role: "Sand dweller", color: "#FACC15" },
+      { name: "Banggai cardinalfish", kind: "fish", qty: 3, role: "Hovers mid-water", color: "#CBD5E1" },
+      { name: "Skunk cleaner shrimp", kind: "inv", qty: 1, role: "Cleaner", color: "#F43F5E" },
+      { name: "Turbo snails", kind: "inv", qty: 5, role: "Algae grazers", color: "#A3A380" }
+    ],
+    fresh: [
+      { name: "Neon tetra", kind: "fish", qty: 10, role: "Schooling, mid-water", color: "#38BDF8" },
+      { name: "Panda corydoras", kind: "fish", qty: 6, role: "Bottom forager", color: "#E2E8F0" },
+      { name: "Bristlenose pleco", kind: "fish", qty: 1, role: "Algae grazer", color: "#78716C" },
+      { name: "Amano shrimp", kind: "inv", qty: 4, role: "Clean-up crew", color: "#94A3B8" },
+      { name: "Nerite snails", kind: "inv", qty: 3, role: "Glass and rock grazers", color: "#B45309" }
+    ]
+  };
+  var IDEAS = {
+    salt: [
+      { id: "firefish", name: "Firefish goby", sci: "Nemateleotris magnifica", minGal: 20, fit: "good", color: "#F43F5E", note: "Peaceful hoverer that stays near a bolt hole. Safe with corals and with clownfish.", tags: ["Reef safe", "Peaceful"] },
+      { id: "gramma", name: "Royal gramma", sci: "Gramma loreto", minGal: 30, fit: "good", color: "#A855F7", note: "Purple and yellow cave dweller. Hardy and calm, but keep only one per tank.", tags: ["Reef safe", "One per tank"] },
+      { id: "mandarin", name: "Mandarin dragonet", sci: "Synchiropus splendidus", minGal: 30, fit: "caution", color: "#22D3EE", note: "Eats live copepods almost all day. Only for mature tanks with plenty of live rock.", tags: ["Needs mature tank", "Slow feeder"] },
+      { id: "coralbeauty", name: "Coral beauty angelfish", sci: "Centropyge bispinosa", minGal: 70, fit: "caution", color: "#6366F1", note: "Bright dwarf angel. May nip some soft and LPS corals, so watch it closely.", tags: ["Reef with caution", "Semi-aggressive"] }
+    ],
+    fresh: [
+      { id: "rasbora", name: "Harlequin rasbora", sci: "Trigonostigma heteromorpha", minGal: 10, fit: "good", color: "#FB923C", note: "Calm schooling fish. Keep in a group of eight or more for best colour.", tags: ["Peaceful", "School of 8+"] },
+      { id: "gourami", name: "Honey gourami", sci: "Trichogaster chuna", minGal: 10, fit: "good", color: "#F59E0B", note: "Gentle centrepiece fish that likes floating plants and slow flow.", tags: ["Peaceful", "Plant friendly"] },
+      { id: "otocinclus", name: "Otocinclus", sci: "Otocinclus spp.", minGal: 20, fit: "caution", color: "#A3A380", note: "Excellent algae eater, but delicate when new. Add only to a stable, mature tank.", tags: ["Needs mature tank", "Group of 4+"] },
+      { id: "kuhli", name: "Kuhli loach", sci: "Pangio kuhlii", minGal: 20, fit: "good", color: "#EAB308", note: "Shy, eel-like bottom dweller. Needs soft sand and hiding places.", tags: ["Peaceful", "Soft sand"] }
+    ]
+  };
+  var GAL = { s: 30, m: 75, l: 150, xl: 200 };
+
+  /* ---------- per-viewer state (tank profile, wishlist) ---------- */
+  var tank = { name: "Living room reef", type: "salt", size: "m", sample: true };
+  var wish = [];
+  try {
+    var saved = JSON.parse(localStorage.getItem("petme-tank") || "null");
+    if (saved && saved.type) tank = saved;
+    wish = JSON.parse(localStorage.getItem("petme-wish") || "[]") || [];
+  } catch (e) { /* storage unavailable: keep defaults */ }
+  function saveLocal() { try { localStorage.setItem("petme-tank", JSON.stringify(tank)); localStorage.setItem("petme-wish", JSON.stringify(wish)); } catch (e) {} }
+
+  /* ---------- pricing ---------- */
+  function quote(s) {
+    var svc = by(SERVICES, s.service), type = by(TYPES, s.type);
+    var base = svc.base[s.size];
+    if (svc.typeMult) base *= type.mult;
+    base = Math.round(base / 5) * 5;
+    var rec = svc.id === "clean" ? by(RECUR, s.recur) : null;
+    var discAmt = rec ? Math.round(base * rec.disc) : 0;
+    var zone = CITIES[s.city] || "A", travel = ZONE_FEE[zone];
+    var subtotal = base - discAmt + travel, tax = round2(subtotal * HST), total = round2(subtotal + tax);
+    var monthly = rec && rec.perMonth ? round2(total * rec.perMonth) : 0;
+    return { svc: svc, base: base, discAmt: discAmt, zone: zone, travel: travel, subtotal: subtotal, tax: tax, total: total, monthly: monthly };
+  }
+  function econ(b) {
+    var svc = by(SERVICES, b.service);
+    if (!svc || !b.subtotal) return null;
+    var hours = svc.hours[b.size] || 1;
+    var margin = b.subtotal - hours * LABOUR - (ZONE_COST[b.zone] || 12) - b.subtotal * SUPPLY;
+    return { margin: margin, pct: margin / b.subtotal };
+  }
+
+  /* ---------- shared storage (db), with a this-tab fallback ---------- */
+  var store = {
+    rows: [], mode: "connecting", col: null, subs: [],
+    on: function (f) { this.subs.push(f); },
+    emit: function () { this.subs.forEach(function (f) { f(); }); },
+    init: function () {
+      var self = this, p;
+      try { p = window.claude && window.claude.use ? window.claude.use("db") : null; } catch (e) { p = null; }
+      Promise.resolve(p).catch(function () { return null; }).then(function (db) {
+        if (!db) { self.mode = "local"; self.emit(); return; }
+        self.col = db.collection("bookings");
+        var t = setTimeout(function () { if (self.mode === "connecting") { self.mode = "slow"; self.emit(); } }, 10000);
+        self.col.onSnapshot(function (snap) {
+          self.rows = snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; });
+          if (!snap.metadata.fromCache) { clearTimeout(t); self.mode = "live"; }
+          self.emit();
+        }, function () { clearTimeout(t); self.mode = "error"; self.emit(); });
+      });
+    },
+    add: function (obj) {
+      var id = "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      if (this.col) return this.col.doc(id).set(obj).then(function () { return id; });
+      obj = Object.assign({}, obj, { id: id }); this.rows.unshift(obj); this.emit(); return Promise.resolve(id);
+    },
+    patch: function (id, p) {
+      if (this.col) return this.col.doc(id).update(p);
+      this.rows.forEach(function (r) { if (r.id === id) Object.assign(r, p); }); this.emit(); return Promise.resolve();
+    },
+    remove: function (id) {
+      if (this.col) return this.col.doc(id).delete();
+      this.rows = this.rows.filter(function (r) { return r.id !== id; }); this.emit(); return Promise.resolve();
+    }
+  };
+  function sorted() { return store.rows.slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); }); }
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $("#toast"); t.replaceChildren(el("div", { text: msg }));
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.replaceChildren(); }, 3200);
+  }
+  function fail(e) { toast(e && e.code === "invalid_argument" ? "This account can't save shared data. Ask the owner for contributor access." : "Couldn't save that. Try again in a moment."); }
+
+  var STATUS = { "new": ["Requested", "tert"], confirmed: ["Confirmed", ""], done: ["Completed", "ok"], cancelled: ["Cancelled", "slate"] };
+  function statusBadge(s) { var x = STATUS[s] || [s, "slate"]; return el("span", { class: "badge " + x[1] }, el("span", { class: "dot" }), x[0]); }
+  function tankLine(b) { return ((by(SIZES, b.size) || {}).name || "") + " gal · " + ((by(TYPES, b.type) || {}).name || ""); }
+  function tasksFor(b) { var t = (TASKS[b.service] || []).slice(); if (chemOf(b.type) === "salt" && (b.service === "clean" || b.service === "setup")) t = t.concat(SALT_TASKS); return t; }
+
+  /* ---------- tank art ---------- */
+  function tankArt(type) {
+    var salt = chemOf(type) === "salt";
+    var flora = salt
+      ? '<path d="M60 150c-4-30 6-48 2-70M62 110c10-12 22-14 26-26M58 120c-10-8-20-10-24-22" stroke="#F472B6" stroke-width="5" fill="none" stroke-linecap="round" opacity=".75"/>' +
+        '<ellipse cx="300" cy="138" rx="34" ry="16" fill="#7C3AED" opacity=".55"/><circle cx="286" cy="124" r="7" fill="#A78BFA" opacity=".7"/><circle cx="306" cy="120" r="6" fill="#A78BFA" opacity=".7"/><circle cx="322" cy="128" r="5" fill="#A78BFA" opacity=".7"/>' +
+        '<path d="M360 150c0-24 8-34 4-52M368 120c8-6 14-12 14-20" stroke="#22D3EE" stroke-width="4" fill="none" stroke-linecap="round" opacity=".6"/>'
+      : '<path d="M50 152c-6-40 10-70 0-110M58 152c8-30 24-44 18-80M40 152c-12-24-8-48-20-64M340 152c4-40-12-60-4-96M350 152c10-26 24-36 22-62" stroke="#22C55E" stroke-width="4" fill="none" stroke-linecap="round" opacity=".6"/>' +
+        '<path d="M280 152c-2-20 4-30 0-46" stroke="#4ADE80" stroke-width="3" fill="none" stroke-linecap="round" opacity=".5"/>';
+    var fish = salt
+      ? '<path d="M150 70c6-8 18-9 24-3l7-5v15l-7-5c-6 6-18 5-24-2z" fill="#F97316"/><path d="M230 96c5-6 14-7 18-2l5-4v11l-5-3c-4 4-13 4-18-2z" fill="#FACC15"/><path d="M196 52c4-5 11-6 15-2l4-3v9l-4-3c-4 4-11 3-15-1z" fill="#CBD5E1"/>'
+      : '<path d="M150 70c5-6 14-7 18-2l5-4v11l-5-3c-4 4-13 4-18-2z" fill="#38BDF8"/><path d="M175 82c5-6 14-7 18-2l5-4v11l-5-3c-4 4-13 4-18-2z" fill="#38BDF8"/><path d="M200 66c5-6 14-7 18-2l5-4v11l-5-3c-4 4-13 4-18-2z" fill="#38BDF8"/><path d="M240 120c6-6 16-6 20 0l6-4v12l-6-4c-4 6-14 6-20 0z" fill="#E2E8F0"/>';
+    return svgFrom(
+      '<defs><linearGradient id="lt" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7dd3fc" stop-opacity=".22"/><stop offset="1" stop-color="#7dd3fc" stop-opacity="0"/></linearGradient></defs>' +
+      '<path d="M90 0l40 160H70zM210 0l30 160h-50zM320 0l20 160h-40z" fill="url(#lt)"/>' + flora + fish +
+      '<circle cx="110" cy="40" r="2" fill="#bae6fd" opacity=".6"/><circle cx="116" cy="28" r="1.5" fill="#bae6fd" opacity=".5"/><circle cx="262" cy="34" r="2" fill="#bae6fd" opacity=".5"/>' +
+      '<path d="M0 148c60-10 120 6 200-2s140-8 200 2v12H0z" fill="#1d3a4a"/>', "0 0 400 160");
+  }
+
+  /* =====================================================
+     TANKS
+     ===================================================== */
+  var stockFilter = "all", editingTank = false;
+  function latestReport() {
+    return store.rows.filter(function (r) { return r.status === "done" && r.results && Object.keys(r.results).length; })
+      .sort(function (a, b) { return (b.completedAt || 0) - (a.completedAt || 0); })[0];
+  }
+  function nextVisit() {
+    var t = todayIso();
+    return store.rows.filter(function (r) { return (r.status === "new" || r.status === "confirmed") && r.date >= t; })
+      .sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
+  }
+  function metricGrid(readings, type) {
+    return el("div", { class: "metrics" }, metricsFor(type).filter(function (m) { return readings[m.id] != null && readings[m.id] !== ""; }).map(function (m) {
+      var v = Number(readings[m.id]), j = judge(m, v, type), r = m[chemOf(type)];
+      return el("div", { class: "metric" },
+        el("div", { class: "metric-top" }, el("span", { class: "lbl", text: m.label }), el("span", { class: "badge " + j.cls }, el("span", { class: "dot" }), j.label)),
+        el("div", { class: "metric-val " + j.cls }, v.toFixed(m.dec), m.unit ? el("small", { text: m.unit }) : null),
+        el("div", { class: "tgt", text: "Target " + r[0] + " – " + r[1] + (m.unit ? " " + m.unit : "") }));
+    }));
+  }
+  function renderTanks() {
+    var v = $("#v-tanks");
+    var type = by(TYPES, tank.type), size = by(SIZES, tank.size);
+    var rep = latestReport(), nv = nextVisit();
+    var hero = el("section", { class: "hero" },
+      el("div", { class: "tankart" }, tankArt(tank.type),
+        el("div", { class: "tags" }, el("span", { class: "badge" }, "My tank"), tank.sample ? el("span", { class: "badge dash", text: "Sample profile" }) : null)),
+      el("div", { class: "hero-body" },
+        el("h1", { text: tank.name }),
+        el("p", { class: "hero-sub", text: type.name + " · " + size.name + " gal" }),
+        el("div", { class: "hero-row" },
+          el("span", {}, "Plan ", el("b", { text: nv && nv.recur && nv.recur !== "once" ? by(RECUR, nv.recur).name : "None yet" })),
+          el("span", {}, "Last service ", el("b", { text: rep ? fmtDate(rep.date, { month: "short", day: "numeric" }) : "None" })),
+          el("button", { class: "btn plain sm", type: "button", style: "margin-left:auto;padding:0", onclick: function () { editingTank = !editingTank; renderTanks(); } }, icon("edit", "sm"), editingTank ? "Close" : "Edit tank"))));
+    var editor = null;
+    if (editingTank) {
+      var nameIn = el("input", { type: "text", id: "tankName", value: tank.name });
+      editor = el("section", { class: "panel" },
+        el("h2", { text: "Edit tank" }),
+        el("div", { class: "field" }, el("label", { for: "tankName", text: "Tank name" }), nameIn),
+        el("div", { class: "field" }, el("span", { class: "lbl", text: "Water type" }), seg("tank-type", TYPES.map(function (t) { return { id: t.id, name: t.name }; }), tank.type, function (id) { tank.type = id; })),
+        el("div", { class: "field" }, el("span", { class: "lbl", text: "Size (gallons)" }), seg("tank-size", SIZES.map(function (s) { return { id: s.id, name: s.short }; }), tank.size, function (id) { tank.size = id; })),
+        el("button", { class: "btn", type: "button", text: "Save tank", onclick: function () {
+          tank.name = nameIn.value.trim() || "My tank"; tank.sample = false; saveLocal(); editingTank = false; renderAll(); toast("Tank saved.");
+        } }));
+    }
+    var readings = rep ? rep.results : SAMPLE_READINGS[chemOf(tank.type)];
+    var rtype = rep ? rep.type : tank.type;
+    var chem = el("section", { class: "panel" },
+      el("div", { class: "sec-h" }, el("h2", {}, icon("signal"), "Water test results"), el("span", { class: "lbl cy", text: rep ? "Logged by technician" : "Sample readings" })),
+      metricGrid(readings, rtype),
+      el("p", { class: "fine", text: rep ? "Measured on " + fmtDate(rep.date) + " during visit " + rep.ref + "." : "Your technician logs real readings at every visit. These sample numbers show how they will appear." }));
+    var visit = el("section", { class: "panel" },
+      el("div", { class: "sec-h" }, el("h2", {}, icon("clock"), "Next visit"), nv ? statusBadge(nv.status) : null),
+      nv ? el("div", { class: "kv" },
+          el("div", {}, el("span", { text: "Service" }), by(SERVICES, nv.service).name),
+          el("div", {}, el("span", { text: "When" }), fmtDate(nv.date) + ", " + by(WINDOWS, nv.win).name.split(" –")[0]),
+          el("div", {}, el("span", { text: "Reference" }), nv.ref),
+          el("div", {}, el("span", { text: "Total" }), money(nv.total)))
+        : el("p", { class: "fine", text: "No visit booked. Regular maintenance keeps water stable and costs less per visit." }),
+      nv ? el("button", { class: "btn sec", type: "button", onclick: function () { openDetail(nv.id); } }, "View visit details", icon("chev", "sm"))
+        : el("a", { class: "btn", href: "#book" }, icon("cal", "sm"), "Book a service"));
+    var stock = STOCK[chemOf(tank.type)];
+    var fishN = stock.filter(function (s) { return s.kind === "fish"; }).length;
+    var shown = stock.filter(function (s) { return stockFilter === "all" || s.kind === stockFilter; });
+    var live = el("section", { class: "panel" },
+      el("div", { class: "sec-h" }, el("div", {}, el("h2", { text: "Current livestock" }), el("p", { class: "fine", text: "Sample list. Your technician updates it after each visit." })),
+        el("span", { class: "badge tert", text: stock.reduce(function (s, x) { return s + x.qty; }, 0) + " total" })),
+      el("div", { class: "chips" }, [["all", "All"], ["fish", "Fish (" + fishN + ")"], ["inv", "Invertebrates (" + (stock.length - fishN) + ")"]].map(function (f) {
+        return el("button", { type: "button", "aria-pressed": String(stockFilter === f[0]), text: f[1], onclick: function () { stockFilter = f[0]; renderTanks(); } });
+      })),
+      el("div", { class: "rowlist" }, shown.map(function (s) {
+        return el("div", { class: "item" }, el("div", { class: "thumb" }, critter(s.kind, s.color)),
+          el("div", { class: "item-main" }, el("b", { text: s.name }), el("span", { text: s.role })),
+          el("div", { class: "item-side" }, el("span", { class: "badge tert", text: "Qty " + s.qty })));
+      })),
+      el("a", { class: "btn ghost", href: "#livestock" }, icon("fish", "sm"), "See fish that suit this tank"));
+    v.replaceChildren.apply(v, [hero, editor, chem, visit, live].filter(Boolean));
+  }
+
+  /* segmented control helper */
+  function seg(name, items, current, onPick) {
+    return el("div", { class: "seg", role: "radiogroup" }, items.map(function (it) {
+      var input = el("input", { type: "radio", name: name, id: "s-" + name + "-" + it.id, value: it.id });
+      input.checked = it.id === current;
+      input.addEventListener("change", function () { onPick(it.id); });
+      return el("label", { for: input.id }, input, it.name, it.sub ? el("small", { text: it.sub }) : null);
+    }));
+  }
+
+  /* =====================================================
+     BOOK
+     ===================================================== */
+  var bstate = { service: "clean", recur: "w4", city: "Toronto", date: "", win: "am" };
+  var bookBuilt = false;
+  function dateItems() {
+    var out = [], d = new Date();
+    if (bstate.service !== "emergency") d.setDate(d.getDate() + 1);
+    for (var i = 0; out.length < 12 && i < 21; i++, d.setDate(d.getDate() + 1)) {
+      if (d.getDay() === 0 && bstate.service !== "emergency") continue;
+      out.push({ id: iso(d), dw: d.toLocaleDateString("en-CA", { weekday: "short" }), dn: d.getDate(), dm: d.toLocaleDateString("en-CA", { month: "short" }) });
+    }
+    return out;
+  }
+  function curState() { return { service: bstate.service, type: tank.type, size: tank.size, recur: bstate.recur, city: bstate.city }; }
+
+  function buildBook() {
+    var v = $("#v-book");
+    v.replaceChildren(
+      el("div", {}, el("p", { class: "lbl cy", text: "Book service" }), el("h1", { text: "Schedule a tank visit" }), el("p", { class: "fine", style: "margin-top:4px", text: "Toronto and the GTA. Starter prices for this prototype, in CAD." })),
+      el("section", { class: "panel", id: "b-tank" }),
+      el("section", { class: "panel" }, el("div", { class: "sec-h" }, el("h2", { text: "Select service" }), el("span", { class: "lbl", text: "Priced for your tank" })), el("div", { id: "b-services", style: "display:grid;gap:10px" })),
+      el("section", { class: "panel", id: "b-recur" }),
+      el("section", { class: "panel" },
+        el("div", { class: "sec-h" }, el("h2", { text: "Service window" }), el("span", { class: "lbl", id: "b-datelbl" })),
+        el("div", { class: "field" }, el("label", { for: "b-city", text: "City" }), el("select", { id: "b-city" })),
+        el("div", { class: "days", id: "b-days", role: "radiogroup", "aria-label": "Day" }),
+        el("div", { class: "wins", id: "b-wins", role: "radiogroup", "aria-label": "Arrival window" })),
+      el("section", { class: "panel" },
+        el("div", { class: "sec-h" }, el("h2", { text: "Notes for your technician" }), el("span", { class: "lbl", text: "Optional" })),
+        el("div", { class: "field" }, el("label", { for: "b-notes" }, icon("note", "sm"), " Field notes"), el("textarea", { id: "b-notes", placeholder: "Recent fish losses, parking, gate codes, stairs, equipment issues..." })),
+        el("div", { id: "b-wish" }),
+        el("label", { class: "check" }, el("input", { type: "checkbox", id: "b-sms", checked: true }), "Text me when the technician is 15 minutes away"),
+        el("label", { class: "check" }, el("input", { type: "checkbox", id: "b-home" }), "I may not be home. I will leave access instructions in the notes")),
+      el("section", { class: "panel" },
+        el("h2", { text: "Your details" }),
+        el("div", { class: "two" },
+          el("div", { class: "field" }, el("label", { for: "b-name", text: "Name" }), el("input", { type: "text", id: "b-name", autocomplete: "name" })),
+          el("div", { class: "field" }, el("label", { for: "b-phone", text: "Phone" }), el("input", { type: "tel", id: "b-phone", autocomplete: "tel", inputmode: "tel" })))),
+      el("section", { class: "panel flat" },
+        el("div", { class: "sec-h" }, el("span", { class: "lbl", text: "Billing summary" }), el("span", { class: "lbl cy", id: "b-plan" })),
+        el("div", { class: "ledger", id: "b-ledger" })),
+      el("button", { class: "btn block", type: "button", id: "b-submit", onclick: submitBooking }, icon("cal", "sm"), "Confirm and request visit"),
+      el("p", { class: "err", id: "b-err", role: "alert" }),
+      el("p", { class: "fine", style: "text-align:center;margin-top:-8px", text: "No payment now. You pay after the visit is done." }),
+      el("section", { class: "panel", id: "b-done", hidden: true })
+    );
+    var sel = $("#b-city");
+    sel.replaceChildren.apply(sel, Object.keys(CITIES).map(function (c) { return el("option", { value: c, text: c }); }));
+    sel.value = bstate.city;
+    sel.addEventListener("change", function () { bstate.city = sel.value; updateBook(); });
+    bookBuilt = true;
+    refreshBook();
+  }
+  function refreshBook() {
+    if (!bookBuilt) return;
+    var type = by(TYPES, tank.type);
+    $("#b-tank").replaceChildren(
+      el("div", { class: "sec-h" }, el("span", { class: "lbl", text: "Tank for this visit" }), tank.sample ? el("span", { class: "badge dash", text: "Sample profile" }) : el("span", { class: "badge", text: "Saved" })),
+      el("div", { class: "item", style: "padding:0" }, el("div", { class: "thumb" }, icon("tank")), el("div", { class: "item-main" }, el("b", { text: tank.name }), el("span", { text: type.name + " · " + by(SIZES, tank.size).name + " gal" }))),
+      seg("bt-type", TYPES.map(function (t) { return { id: t.id, name: t.name.replace(" reef", "") }; }), tank.type, function (id) { tank.type = id; saveLocal(); refreshBook(); }),
+      seg("bt-size", SIZES.map(function (s) { return { id: s.id, name: s.short, sub: "gal" }; }), tank.size, function (id) { tank.size = id; saveLocal(); refreshBook(); }));
+    var svcBox = $("#b-services");
+    svcBox.replaceChildren.apply(svcBox, SERVICES.map(function (svc) {
+      var q = quote({ service: svc.id, type: tank.type, size: tank.size, recur: "once", city: "Toronto" });
+      var input = el("input", { type: "radio", name: "b-service", id: "bs-" + svc.id, value: svc.id });
+      input.checked = bstate.service === svc.id;
+      input.addEventListener("change", function () {
+        var wasEm = bstate.service === "emergency"; bstate.service = svc.id;
+        if (wasEm !== (svc.id === "emergency")) buildDays();
+        updateBook();
+      });
+      return el("label", { class: "svc", for: input.id }, input,
+        el("div", { class: "svc-top" }, icon(svc.icon), el("div", { class: "svc-name" }, el("b", { text: svc.name }), el("span", { text: svc.tag })),
+          el("span", { class: "radio" }, icon("check"))),
+        el("p", { text: svc.blurb }),
+        el("div", { class: "svc-foot" }, el("span", { class: "dur" }, icon("clock", "sm"), "~" + fmtDur(svc.hours[tank.size])), el("span", { class: "price", text: money0(q.base) })));
+    }));
+    buildDays(); buildWins(); updateBook();
+  }
+  function buildDays() {
+    var items = dateItems();
+    if (!items.some(function (x) { return x.id === bstate.date; })) bstate.date = "";
+    var box = $("#b-days");
+    box.replaceChildren.apply(box, items.map(function (it) {
+      var input = el("input", { type: "radio", name: "b-date", id: "bd-" + it.id, value: it.id });
+      input.checked = bstate.date === it.id;
+      input.addEventListener("change", function () { bstate.date = it.id; $("#b-err").textContent = ""; updateBook(); });
+      return el("label", { class: "day", for: input.id }, input, el("span", { class: "dw", text: it.dw }), el("span", { class: "dn", text: it.dn }), el("span", { class: "dm", text: it.dm }));
+    }));
+  }
+  function buildWins() {
+    var box = $("#b-wins");
+    box.replaceChildren.apply(box, WINDOWS.map(function (w) {
+      var input = el("input", { type: "radio", name: "b-win", id: "bw-" + w.id, value: w.id });
+      input.checked = bstate.win === w.id;
+      input.addEventListener("change", function () { bstate.win = w.id; });
+      return el("label", { class: "win", for: input.id }, input, icon(w.icon), el("div", {}, el("b", { text: w.name }), el("span", { text: w.sub })), el("span", { class: "radio" }, icon("check")));
+    }));
+  }
+  function updateBook() {
+    var q = quote(curState());
+    var rec = $("#b-recur");
+    rec.hidden = bstate.service !== "clean";
+    if (!rec.hidden) {
+      rec.replaceChildren(
+        el("div", { class: "sec-h" }, el("h2", { text: "Maintenance plan" }), el("span", { class: "lbl cy", text: "Saves on every visit" })),
+        seg("b-recur", RECUR.map(function (r) { return { id: r.id, name: r.name, sub: r.sub }; }), bstate.recur, function (id) { bstate.recur = id; updateBook(); }));
+    }
+    $("#b-datelbl").textContent = bstate.date ? fmtDate(bstate.date) : "Pick a day";
+    var rows = [["Service: " + q.svc.name, money(q.base), ""]];
+    if (q.discAmt) rows.push(["Plan discount", money(-q.discAmt), "disc"]);
+    if (q.travel) rows.push(["Travel, zone " + q.zone, money(q.travel), ""]);
+    rows.push(["HST 13%", money(q.tax), ""]);
+    var lg = $("#b-ledger");
+    lg.replaceChildren.apply(lg, rows.map(function (r) { return el("div", { class: "r " + r[2] }, el("span", { text: r[0] }), el("span", { text: r[1] })); }).concat([
+      el("div", { class: "tot" }, el("div", {}, el("b", { text: q.monthly ? "Per visit" : "Due after visit" }), el("span", { text: q.monthly ? "About " + money(q.monthly) + " per month on this plan" : "Paid once the work is done" })), el("span", { class: "amt", text: money(q.total) }))
+    ]));
+    $("#b-plan").textContent = q.svc.id === "clean" && bstate.recur !== "once" ? by(RECUR, bstate.recur).name : "";
+    var wb = $("#b-wish");
+    var items = wishItems();
+    if (!items.length) { wb.replaceChildren(); return; }
+    wb.replaceChildren(el("div", { class: "field" }, el("span", { class: "lbl", text: "Fish to discuss at this visit" }), el("div", { class: "wish" }, items.map(function (i) { return el("span", { class: "badge tert", text: i.name }); }))));
+  }
+  function wishItems() { var all = IDEAS.salt.concat(IDEAS.fresh); return wish.map(function (id) { return by(all, id); }).filter(Boolean); }
+
+  function makeBooking(s, contact, extra) {
+    var q = quote(s);
+    var b = {
+      ref: "PM-" + Math.random().toString(36).slice(2, 6).toUpperCase(),
+      service: s.service, type: s.type, size: s.size, tankName: s.tankName || "", city: s.city, zone: q.zone, recur: s.service === "clean" ? s.recur : "once",
+      date: s.date, win: s.win, name: contact.name, phone: contact.phone, notes: contact.notes || "", sms: !!contact.sms, wishlist: contact.wishlist || [],
+      base: q.base, discAmt: q.discAmt, travel: q.travel, subtotal: q.subtotal, tax: q.tax, total: q.total, monthly: q.monthly,
+      status: "new", example: false, createdAt: Date.now()
+    };
+    return Object.assign(b, extra || {});
+  }
+  function submitBooking() {
+    var err = $("#b-err"), name = $("#b-name").value.trim(), phone = $("#b-phone").value.trim();
+    if (!bstate.date) { err.textContent = "Pick a day for the visit."; $("#b-days").scrollIntoView({ block: "center" }); return; }
+    if (!name) { err.textContent = "Add your name."; $("#b-name").focus(); return; }
+    if (phone.replace(/\D/g, "").length < 7) { err.textContent = "Add a phone number we can reach you on."; $("#b-phone").focus(); return; }
+    err.textContent = "";
+    var notes = $("#b-notes").value.trim();
+    if ($("#b-home").checked) notes = (notes ? notes + " " : "") + "(Customer may not be home.)";
+    var s = curState(); s.date = bstate.date; s.win = bstate.win; s.tankName = tank.name;
+    var b = makeBooking(s, { name: name, phone: phone, notes: notes, sms: $("#b-sms").checked, wishlist: wishItems().map(function (i) { return i.name; }) });
+    var btn = $("#b-submit"); btn.disabled = true;
+    store.add(b).then(function (id) {
+      wish = []; saveLocal();
+      var d = $("#b-done");
+      d.replaceChildren(
+        el("div", { class: "sec-h" }, el("span", { class: "lbl cy", text: "Request received" }), statusBadge("new")),
+        el("h1", { class: "mono", text: b.ref }),
+        el("p", { text: by(SERVICES, b.service).name + " on " + fmtDate(b.date) + ", " + by(WINDOWS, b.win).name + ", in " + b.city + "." }),
+        el("p", { class: "fine", text: "We will confirm your arrival window by text or phone." + (store.mode === "live" ? "" : " This preview isn't connected to shared storage, so the request is only kept in this tab.") }),
+        el("div", { class: "acts" },
+          el("button", { class: "btn", type: "button", onclick: function () { openDetail(id); } }, "View visit details"),
+          el("button", { class: "btn sec", type: "button", text: "Book another", onclick: resetBook })));
+      Array.prototype.forEach.call($("#v-book").children, function (c) { if (c.id !== "b-done") c.hidden = true; });
+      d.hidden = false; window.scrollTo(0, 0);
+    }, fail).then(function () { btn.disabled = false; });
+  }
+  function resetBook() {
+    ["b-name", "b-phone", "b-notes"].forEach(function (id) { $("#" + id).value = ""; });
+    $("#b-home").checked = false; bstate.date = "";
+    Array.prototype.forEach.call($("#v-book").children, function (c) { c.hidden = c.id === "b-done"; });
+    refreshBook(); window.scrollTo(0, 0);
+  }
+
+  /* =====================================================
+     HISTORY + SERVICE REPORT
+     ===================================================== */
+  var detailId = null;
+  function openDetail(id) { detailId = id; if (location.hash !== "#history") location.hash = "#history"; else renderHistory(); window.scrollTo(0, 0); }
+  function renderHistory() {
+    var v = $("#v-history");
+    var b = detailId && by(store.rows, detailId);
+    if (b) { v.replaceChildren.apply(v, reportView(b)); return; }
+    var rows = sorted();
+    v.replaceChildren(
+      el("div", {}, el("p", { class: "lbl cy", text: "Service history" }), el("h1", { text: "Your visits" })),
+      rows.length ? el("div", { style: "display:grid;gap:10px" }, rows.map(function (r) {
+        var svc = by(SERVICES, r.service) || { name: r.service, icon: "drop" };
+        return el("button", { class: "job", type: "button", onclick: function () { openDetail(r.id); } },
+          el("div", { class: "job-head" }, el("h3", { text: svc.name }), r.example ? el("span", { class: "badge dash", text: "Example" }) : null, statusBadge(r.status)),
+          el("div", { class: "kv" },
+            el("div", {}, el("span", { text: "Date" }), fmtDate(r.date)),
+            el("div", {}, el("span", { text: "Reference" }), el("span", { class: "mono", style: "font-size:13px;letter-spacing:0;text-transform:none;color:var(--ink)", text: r.ref })),
+            el("div", {}, el("span", { text: "Tank" }), tankLine(r)),
+            el("div", {}, el("span", { text: "Total" }), money(r.total || 0))));
+      })) : el("div", { class: "empty" }, el("h2", { text: "No visits yet" }), el("p", { text: "Booked visits and their service reports appear here, with the water test results your technician logs." }), el("a", { class: "btn", href: "#book" }, "Book your first visit"))
+    );
+  }
+  function reportView(b) {
+    var svc = by(SERVICES, b.service) || { name: b.service, hours: {} };
+    var tasks = tasksFor(b), done = b.status === "done";
+    var out = [];
+    out.push(el("div", { class: "sec-h" },
+      el("button", { class: "back", type: "button", onclick: function () { detailId = null; renderHistory(); } }, icon("back", "sm"), "All visits"),
+      statusBadge(b.status)));
+    out.push(el("div", {}, el("p", { class: "lbl cy", text: "Visit " + b.ref + (b.example ? " · example" : "") }), el("h1", { text: svc.name }), el("p", { class: "fine", style: "margin-top:4px", text: (b.tankName ? b.tankName + " · " : "") + tankLine(b) })));
+    out.push(el("section", { class: "panel" },
+      el("div", { class: "tiles" },
+        el("div", { class: "tile" }, el("span", { class: "lbl", text: "Date" }), el("b", { text: fmtDate(b.date, { month: "short", day: "numeric" }) }), el("small", { text: (by(WINDOWS, b.win) || {}).sub || "" })),
+        el("div", { class: "tile" }, el("span", { class: "lbl", text: "Duration" }), el("b", { text: fmtDur((svc.hours || {})[b.size] || 1) }), el("small", { text: done ? "On site" : "Estimated" })),
+        el("div", { class: "tile" }, el("span", { class: "lbl", text: "Tasks" }), el("b", { text: (done ? tasks.length : 0) + "/" + tasks.length }), el("small", { text: done ? "Completed" : "Planned" }))),
+      el("div", { class: "kv" },
+        el("div", {}, el("span", { text: "Location" }), b.city + " (zone " + b.zone + ")"),
+        el("div", {}, el("span", { text: "Contact" }), b.name + ", " + b.phone))));
+    out.push(el("section", { class: "panel" },
+      el("div", { class: "sec-h" }, el("h2", {}, icon("pro"), "Work checklist"), el("span", { class: "badge " + (done ? "ok" : "slate"), text: done ? "Tasks completed" : "Planned tasks" })),
+      el("div", {}, tasks.map(function (t) { return el("div", { class: "task" }, el("span", { class: "tick" + (done ? " on" : "") }, done ? icon("check") : null), el("b", { text: t })); }))));
+    if (done && b.results && Object.keys(b.results).length) {
+      out.push(el("section", { class: "panel" },
+        el("div", { class: "sec-h" }, el("h2", {}, icon("flask"), "Post-service chemistry"), b.completedAt ? el("span", { class: "lbl", text: "Logged " + new Date(b.completedAt).toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }) }) : null),
+        metricGrid(b.results, b.type)));
+    }
+    if (b.techNotes) out.push(el("section", { class: "panel" }, el("h2", { text: "Technician notes" }), el("p", { class: "quote", text: b.techNotes })));
+    if (b.notes || (b.wishlist && b.wishlist.length)) out.push(el("section", { class: "panel flat" }, el("span", { class: "lbl", text: "Your notes" }),
+      b.notes ? el("p", { class: "note", text: b.notes }) : null,
+      b.wishlist && b.wishlist.length ? el("div", { class: "wish" }, b.wishlist.map(function (n) { return el("span", { class: "badge tert", text: String(n) }); })) : null));
+    var lines = [["Service", money(b.base || 0), ""]];
+    if (b.discAmt) lines.push(["Plan discount", money(-b.discAmt), "disc"]);
+    if (b.travel) lines.push(["Travel", money(b.travel), ""]);
+    lines.push(["HST 13%", money(b.tax || 0), ""]);
+    out.push(el("section", { class: "panel flat" }, el("span", { class: "lbl", text: "Billing" }),
+      el("div", { class: "ledger" }, lines.map(function (r) { return el("div", { class: "r " + r[2] }, el("span", { text: r[0] }), el("span", { text: r[1] })); }),
+        el("div", { class: "tot" }, el("div", {}, el("b", { text: done ? "Total paid" : "Due after visit" }), el("span", { text: b.recur && b.recur !== "once" ? by(RECUR, b.recur).name + " plan" : "One visit" })), el("span", { class: "amt", text: money(b.total || 0) })))));
+    if (b.status === "new" || b.status === "confirmed") out.push(el("button", { class: "btn danger block", type: "button", text: "Cancel this visit", onclick: function () { store.patch(b.id, { status: "cancelled" }).then(function () { toast("Visit cancelled."); }, fail); } }));
+    if (done) out.push(el("a", { class: "btn block", href: "#book" }, icon("cal", "sm"), "Book the next visit"));
+    return out;
+  }
+
+  /* =====================================================
+     LIVESTOCK IDEAS
+     ===================================================== */
+  function renderLivestock() {
+    var v = $("#v-livestock");
+    var chem = chemOf(tank.type), gal = GAL[tank.size];
+    var ideas = IDEAS[chem];
+    v.replaceChildren(
+      el("div", {}, el("p", { class: "lbl cy", text: "Livestock" }), el("h1", { text: "Fish that suit your tank" }),
+        el("p", { class: "fine", style: "margin-top:4px", text: "Ideas for a " + by(SIZES, tank.size).name + " gal " + by(TYPES, tank.type).name.toLowerCase() + " tank. Add any to your next visit and your technician will check fit and help you source them." })),
+      el("div", { style: "display:grid;gap:12px" }, ideas.map(function (f) {
+        var tooBig = f.minGal > gal, on = wish.indexOf(f.id) >= 0;
+        var fit = tooBig ? ["crit", "Tank too small"] : f.fit === "good" ? ["ok", "Good fit"] : ["warn", "Use caution"];
+        return el("article", { class: "rec" },
+          el("div", { class: "rec-top" }, el("div", { class: "thumb" }, critter("fish", f.color)),
+            el("div", {}, el("span", { class: "sci", text: f.sci }), el("h3", { text: f.name }), el("span", { class: "badge " + fit[0], style: "justify-self:start;margin-top:4px" }, el("span", { class: "dot" }), fit[1]))),
+          el("p", { text: f.note }),
+          el("div", { class: "facts" }, f.tags.map(function (t) { return el("span", { class: "badge slate", text: t }); }), el("span", { class: "badge slate", text: "Min. " + f.minGal + " gal" })),
+          el("button", { class: on ? "btn sec" : "btn ghost", type: "button", disabled: tooBig, onclick: function () {
+            if (on) wish = wish.filter(function (x) { return x !== f.id; }); else wish.push(f.id);
+            saveLocal(); renderLivestock(); updateBook(); toast(on ? "Removed from your next visit." : f.name + " added to your next visit.");
+          } }, icon(on ? "check" : "plus", "sm"), on ? "Added to next visit" : "Discuss at next visit"));
+      })),
+      el("p", { class: "fine", text: "Minimum tank sizes are common hobby guidance, not a guarantee. Your technician confirms fit with your current fish before anything is added." }),
+      wish.length ? el("a", { class: "btn block", href: "#book" }, icon("cal", "sm"), "Book a visit with " + wish.length + " to discuss") : null
+    );
+  }
+
+  /* =====================================================
+     PRO (provider jobs)
+     ===================================================== */
+  var proFilter = "all", completing = null;
+  function loadExamples() {
+    var d0 = new Date(), d1 = new Date(), d2 = new Date(), d3 = new Date();
+    d0.setDate(d0.getDate() - 6); d1.setDate(d1.getDate() + 1); d2.setDate(d2.getDate() + 3); d3.setDate(d3.getDate() + 5);
+    var rows = [
+      makeBooking({ service: "clean", type: "salt", size: "m", recur: "w2", city: "Toronto", date: iso(d0), win: "am", tankName: "Living room reef" }, { name: "Sample customer A", phone: "416 555 0148", notes: "Clownfish pair. Dog at home." },
+        { example: true, status: "done", completedAt: d0.getTime() + 14 * 3600e3, results: { temp: 25.4, ph: 8.18, sal: 1.025, alk: 8.2, ca: 425, nh3: 0, no2: 0, no3: 9 }, techNotes: "Water stable. Skimmer cup was full, cleaned it. Nitrate creeping up a little, so feed slightly less between visits." }),
+      makeBooking({ service: "clean", type: "salt", size: "m", recur: "w2", city: "Toronto", date: iso(d1), win: "am", tankName: "Living room reef" }, { name: "Sample customer A", phone: "416 555 0148", notes: "Clownfish pair. Dog at home." }, { example: true, status: "confirmed" }),
+      makeBooking({ service: "setup", type: "planted", size: "l", recur: "once", city: "Mississauga", date: iso(d2), win: "mid" }, { name: "Sample customer B", phone: "905 555 0172", notes: "New 120 gallon planted tank. Basement, one flight of stairs." }, { example: true }),
+      makeBooking({ service: "move", type: "fresh", size: "s", recur: "once", city: "Oakville", date: iso(d3), win: "pm" }, { name: "Sample customer C", phone: "905 555 0119", notes: "Moving across town, 29 gallon with cichlids." }, { example: true })
+    ];
+    rows.reduce(function (p, r, i) { return p.then(function () { r.createdAt = Date.now() - (rows.length - i) * 1000; return store.add(r); }); }, Promise.resolve())
+      .then(function () { toast("Added 4 example jobs."); }, fail);
+  }
+  function clearExamples() {
+    Promise.all(store.rows.filter(function (r) { return r.example; }).map(function (r) { return store.remove(r.id); })).then(function () { toast("Removed example jobs."); }, fail);
+  }
+  function act(label, b, patch, cls) { return el("button", { class: "btn sm " + (cls || "sec"), type: "button", text: label, onclick: function () { store.patch(b.id, patch).catch(fail); } }); }
+  function completeForm(b) {
+    var ms = metricsFor(b.type);
+    var inputs = {};
+    var notes = el("textarea", { id: "c-notes-" + b.id, placeholder: "What you did, what you noticed, advice for the customer" });
+    return el("div", { class: "complete" },
+      el("span", { class: "lbl cy", text: "Log water test and complete" }),
+      el("div", { class: "readings" }, ms.map(function (m) {
+        var inp = el("input", { type: "number", step: "any", inputmode: "decimal", id: "c-" + m.id + "-" + b.id, placeholder: String(m[chemOf(b.type)][0]) });
+        inputs[m.id] = inp;
+        return el("div", { class: "field" }, el("label", { for: inp.id, text: m.label + (m.unit ? " (" + m.unit + ")" : "") }), inp);
+      })),
+      el("div", { class: "field" }, el("label", { for: notes.id, text: "Notes for the customer" }), notes),
+      el("div", { class: "acts" },
+        el("button", { class: "btn sm", type: "button", onclick: function () {
+          var res = {};
+          Object.keys(inputs).forEach(function (k) { var v = inputs[k].value.trim(); if (v !== "" && !isNaN(Number(v))) res[k] = Number(v); });
+          store.patch(b.id, { status: "done", results: res, techNotes: notes.value.trim(), completedAt: Date.now() }).then(function () { completing = null; renderPro(); toast("Report sent to the customer."); }, fail);
+        } }, icon("check", "sm"), "Save report and complete"),
+        el("button", { class: "btn sm plain", type: "button", text: "Cancel", onclick: function () { completing = null; renderPro(); } })));
+  }
+  function proCard(b) {
+    var svc = by(SERVICES, b.service) || { name: b.service };
+    var e = econ(b), acts = [];
+    if (b.status === "new") acts.push(act("Confirm", b, { status: "confirmed" }, ""), act("Decline", b, { status: "cancelled" }, "danger"));
+    else if (b.status === "confirmed") acts.push(el("button", { class: "btn sm", type: "button", text: "Complete with report", onclick: function () { completing = b.id; renderPro(); } }), act("Cancel", b, { status: "cancelled" }, "danger"));
+    else if (b.status === "cancelled") acts.push(act("Restore", b, { status: "new" }));
+    else if (b.status === "done") acts.push(el("button", { class: "btn sm sec", type: "button", text: "View report", onclick: function () { openDetail(b.id); } }));
+    acts.push(el("button", { class: "btn sm plain", type: "button", text: "Remove", onclick: function () { store.remove(b.id).catch(fail); } }));
+    return el("article", { class: "job" },
+      el("div", { class: "job-head" }, el("h3", { text: svc.name }), b.example ? el("span", { class: "badge dash", text: "Example" }) : null, statusBadge(b.status)),
+      el("div", { class: "kv" },
+        el("div", {}, el("span", { text: "When" }), fmtDate(b.date) + ", " + ((by(WINDOWS, b.win) || {}).name || "").split(" –")[0]),
+        el("div", {}, el("span", { text: "Customer" }), b.name || "Unnamed"),
+        el("div", {}, el("span", { text: "Phone" }), b.phone || "None"),
+        el("div", {}, el("span", { text: "Location" }), (b.city || "") + " (zone " + (b.zone || "A") + ")"),
+        el("div", {}, el("span", { text: "Tank" }), tankLine(b)),
+        el("div", {}, el("span", { text: "Plan" }), b.recur && b.recur !== "once" ? by(RECUR, b.recur).name : "One visit")),
+      b.notes ? el("p", { class: "note", text: b.notes }) : null,
+      b.wishlist && b.wishlist.length ? el("div", { class: "wish" }, el("span", { class: "lbl", text: "Wants to discuss" }), b.wishlist.map(function (n) { return el("span", { class: "badge tert", text: String(n) }); })) : null,
+      completing === b.id ? completeForm(b) : el("div", { class: "acts" },
+        el("span", { class: "money" }, "Total ", el("b", { text: money(b.total || 0) }), e ? " · Margin " : "", e ? el("b", { text: money0(e.margin) + " (" + Math.round(e.pct * 100) + "%)" }) : null),
+        acts));
+  }
+  function renderPro() {
+    var v = $("#v-pro");
+    var rows = sorted();
+    var live = rows.filter(function (r) { return r.status !== "cancelled"; });
+    var open = rows.filter(function (r) { return r.status === "new" || r.status === "confirmed"; }).length;
+    var value = live.reduce(function (s, r) { return s + (r.total || 0); }, 0);
+    var mrr = 0, seen = {};
+    live.forEach(function (r) { if (r.monthly && !seen[r.name + r.tankName]) { seen[r.name + r.tankName] = 1; mrr += r.monthly; } });
+    var sub = 0, mar = 0;
+    live.forEach(function (r) { var e = econ(r); if (e) { sub += r.subtotal; mar += e.margin; } });
+    var head = el("div", {}, el("p", { class: "lbl cy", text: "Technician console" }), el("h1", { text: "Jobs" }),
+      el("p", { class: "fine", style: "margin-top:4px", text: "Confirm requests, then complete each visit with a water test. The customer sees the report in their history." }));
+    if (!rows.length) {
+      v.replaceChildren(head, el("div", { class: "empty" },
+        el("h2", { text: "No jobs yet" }),
+        el("p", { text: "Requests from the booking screen appear here. To see how it works first, add a few example jobs. They are labelled as examples and you can remove them in one tap." }),
+        el("div", { class: "acts" }, el("button", { class: "btn", type: "button", text: "Add 4 example jobs", onclick: loadExamples }), el("a", { class: "btn sec", href: "#book", text: "Make a real request" }))));
+      return;
+    }
+    var shown = rows.filter(function (r) { return proFilter === "all" || r.status === proFilter; });
+    var hasEx = rows.some(function (r) { return r.example; });
+    v.replaceChildren(head,
+      el("div", { class: "stats" },
+        el("div", { class: "stat" }, el("b", { text: String(open) }), el("span", { text: "Open jobs" })),
+        el("div", { class: "stat" }, el("b", { text: money0(value) }), el("span", { text: "Booked, tax in" })),
+        el("div", { class: "stat" }, el("b", { text: money0(mrr) }), el("span", { text: "Recurring per month" })),
+        el("div", { class: "stat" }, el("b", { text: sub ? Math.round(mar / sub * 100) + "%" : "n/a" }), el("span", { text: "Est. margin" }))),
+      el("div", { class: "chips" }, [["all", "All"], ["new", "Requested"], ["confirmed", "Confirmed"], ["done", "Completed"], ["cancelled", "Cancelled"]].map(function (f) {
+        return el("button", { type: "button", "aria-pressed": String(proFilter === f[0]), text: f[1], onclick: function () { proFilter = f[0]; renderPro(); } });
+      })),
+      shown.length ? el("div", { style: "display:grid;gap:12px" }, shown.map(proCard)) : el("div", { class: "empty" }, el("p", { text: "No jobs with that status." })),
+      el("div", { class: "acts" }, hasEx ? el("button", { class: "btn sm sec", type: "button", text: "Remove example jobs", onclick: clearExamples }) : el("button", { class: "btn sm sec", type: "button", text: "Add example jobs", onclick: loadExamples })),
+      el("p", { class: "fine", text: "Margin assumes labour at $" + LABOUR + " per hour, travel cost by zone ($12, $18, $24) and supplies at " + Math.round(SUPPLY * 100) + "% of the pre-tax price. Swap in your real costs after the first jobs." }));
+  }
+
+  /* =====================================================
+     ROUTING + BOOT
+     ===================================================== */
+  var ROUTES = [["tanks", "Tanks", "waves"], ["book", "Book", "cal"], ["history", "History", "clock"], ["livestock", "Livestock", "fish"], ["pro", "Pro jobs", "pro"]];
+  var dock = $("#dock");
+  dock.replaceChildren.apply(dock, ROUTES.map(function (r) { return el("a", { href: "#" + r[0], "data-nav": r[0] }, icon(r[2]), r[1]); }));
+  $("#brandMark").append(icon("fish"));
+  function current() { var r = (location.hash || "#tanks").slice(1); return ROUTES.some(function (x) { return x[0] === r; }) ? r : "tanks"; }
+  function renderAll() {
+    var r = current();
+    if (r === "tanks") renderTanks();
+    if (r === "book") refreshBook();
+    if (r === "history") renderHistory();
+    if (r === "livestock") renderLivestock();
+    if (r === "pro") renderPro();
+  }
+  function route() {
+    var r = current();
+    ROUTES.forEach(function (x) { $("#v-" + x[0]).hidden = x[0] !== r; });
+    document.querySelectorAll("[data-nav]").forEach(function (a) { if (a.getAttribute("data-nav") === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    renderAll(); window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", function () { if (current() !== "history") detailId = null; route(); });
+  store.on(function () {
+    var txt = { live: "Live sync", connecting: "Connecting", slow: "Sync is slow", error: "Offline", local: "Preview mode" }[store.mode];
+    $("#syncText").textContent = txt;
+    $("#syncLine").style.color = store.mode === "live" ? "var(--primary)" : "";
+    var r = current();
+    if (r === "tanks") renderTanks();
+    if (r === "history") renderHistory();
+    if (r === "pro" && !completing) renderPro();
+  });
+  buildBook(); route(); store.init();
+})();
+</script>

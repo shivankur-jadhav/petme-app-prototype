@@ -1,0 +1,17 @@
+{
+  "name": "petme-app",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "setup": "npm install && npx expo install react react-native react-dom react-native-web expo-status-bar expo-font expo-linear-gradient expo-blur expo-haptics react-native-reanimated react-native-worklets react-native-safe-area-context react-native-svg @react-native-async-storage/async-storage @expo-google-fonts/space-grotesk @expo-google-fonts/inter && npx expo install typescript @types/react -- --save-dev",
+    "start": "expo start",
+    "tunnel": "expo start --tunnel",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "expo": "latest"
+  }
+}

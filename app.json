@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "PetMe",
+    "slug": "petme",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#061426",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#061426"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.petme.app"
+    },
+    "android": {
+      "package": "com.petme.app",
+      "edgeToEdgeEnabled": true
+    }
+  }
+}

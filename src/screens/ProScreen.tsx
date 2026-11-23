@@ -1,0 +1,116 @@
+import React, { useState } from "react";
+import { Text, View } from "react-native";
+import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
+import { C, F, R, T } from "../theme";
+import { Badge, Btn, Chips, Empty, Field, Label, Panel, Screen, Title, enter, haptic, layout } from "../components/ui";
+import { TabId } from "../components/visuals";
+import { byNewest, useStore } from "../store";
+import { Booking, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, econ, fmtDate, metricsFor, money, money0 } from "../data";
+import { StatusBadge, tankLine } from "./HistoryScreen";
+
+function CompleteForm({ b, onDone, onCancel }: { b: Booking; onDone: (r: Record<string, number>, notes: string) => void; onCancel: () => void }) {
+  const ms = metricsFor(b.type);
+  const [vals, setVals] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState("");
+  return (
+    <Animated.View entering={FadeInDown.springify().damping(18)} exiting={FadeOut.duration(150)} layout={layout} style={{ gap: 10, borderTopWidth: 1, borderTopColor: C.hair, paddingTop: 12 }}>
+      <Label color={C.primary}>Log water test and complete</Label>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {ms.map((m) => (
+          <Field key={m.id} style={{ flexBasis: "30%", minWidth: 96 }} label={m.label + (m.unit ? ` (${m.unit})` : "")} value={vals[m.id] || ""}
+            onChangeText={(v) => setVals({ ...vals, [m.id]: v.replace(",", ".") })} keyboardType="decimal-pad" placeholder={String(m[chemOf(b.type)]![0])} />
+        ))}
+      </View>
+      <Field label="Notes for the customer" value={notes} onChangeText={setNotes} multiline placeholder="What you did, what you noticed, advice for the customer" />
+      <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+        <Btn small label="Save report and complete" icon="check" onPress={() => {
+          const r: Record<string, number> = {};
+          Object.keys(vals).forEach((k) => { const n = Number(vals[k]); if (vals[k] !== "" && !isNaN(n)) r[k] = n; });
+          onDone(r, notes.trim());
+        }} />
+        <Btn small kind="plain" label="Cancel" onPress={onCancel} />
+      </View>
+    </Animated.View>
+  );
+}
+
+export default function ProScreen({ openReport, go }: { openReport: (id: string) => void; go: (t: TabId) => void }) {
+  const { bookings, patchBooking, removeBooking, loadExamples, clearExamples, toast } = useStore();
+  const [filter, setFilter] = useState("all");
+  const [completing, setCompleting] = useState<string | null>(null);
+  const rows = [...bookings].sort(byNewest);
+  const live = rows.filter((r) => r.status !== "cancelled");
+  const open = rows.filter((r) => r.status === "new" || r.status === "confirmed").length;
+  const value = live.reduce((s, r) => s + (r.total || 0), 0);
+  const seen: Record<string, 1> = {};
+  let mrr = 0;
+  live.forEach((r) => { const k = r.name + r.tankName; if (r.monthly && !seen[k]) { seen[k] = 1; mrr += r.monthly; } });
+  let sub = 0, mar = 0;
+  live.forEach((r) => { const e = econ(r); if (e) { sub += r.subtotal; mar += e.margin; } });
+  const shown = rows.filter((r) => filter === "all" || r.status === filter);
+  const hasEx = rows.some((r) => r.example);
+
+  return (
+    <Screen>
+      <Title eyebrow="Technician console" title="Jobs" sub="Confirm requests, then complete each visit with a water test. The customer sees the report in their history." />
+      {!rows.length ? (
+        <Empty title="No jobs yet" text="Requests from the booking screen appear here. To see how it works first, add a few example jobs. They are labelled as examples and you can remove them in one tap.">
+          <Btn label="Add 4 example jobs" onPress={() => { loadExamples(); haptic.success(); toast("Added 4 example jobs."); }} />
+          <Btn label="Make a real request" kind="sec" onPress={() => go("book")} />
+        </Empty>
+      ) : (
+        <>
+          <Animated.View entering={enter(1)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+            {[[String(open), "Open jobs"], [money0(value), "Booked, tax in"], [money0(mrr), "Recurring per month"], [sub ? Math.round((mar / sub) * 100) + "%" : "n/a", "Est. margin"]].map(([v, l]) => (
+              <View key={l} style={{ flexBasis: "47%", flexGrow: 1, backgroundColor: C.s, borderWidth: 1, borderColor: C.hair, borderRadius: R.lg, padding: 12 }}>
+                <Animated.Text key={v} entering={FadeIn.duration(300)} style={{ fontFamily: F.head700, fontSize: 22, color: C.primaryHi }}>{v}</Animated.Text>
+                <Text style={T.small}>{l}</Text>
+              </View>
+            ))}
+          </Animated.View>
+          <Chips items={[{ id: "all", label: "All" }, { id: "new", label: "Requested" }, { id: "confirmed", label: "Confirmed" }, { id: "done", label: "Completed" }, { id: "cancelled", label: "Cancelled" }]} value={filter} onChange={setFilter} />
+          {shown.length ? shown.map((b, i) => {
+            const e = econ(b);
+            return (
+              <Panel key={b.id} index={i + 2}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <Text style={[T.h3, { marginRight: "auto" }]}>{by(SERVICES, b.service)?.name}</Text>
+                  {b.example ? <Badge text="Example" tone="slate" dashed /> : null}
+                  <StatusBadge s={b.status} />
+                </View>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 8 }}>
+                  {[["When", `${fmtDate(b.date)}, ${by(WINDOWS, b.win)?.start}`], ["Customer", b.name], ["Phone", b.phone], ["Location", `${b.city} (zone ${b.zone})`], ["Tank", tankLine(b)], ["Plan", b.recur !== "once" ? by(RECUR, b.recur)!.name : "One visit"]].map(([k, v]) => (
+                    <View key={k} style={{ width: "50%", paddingRight: 8 }}><Label>{k}</Label><Text style={T.body}>{v}</Text></View>
+                  ))}
+                </View>
+                {b.notes ? <Text style={[T.body2, { backgroundColor: C.bg, padding: 10, borderRadius: R.sm }]}>{b.notes}</Text> : null}
+                {b.wishlist?.length ? <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, alignItems: "center" }}><Label>Wants to discuss</Label>{b.wishlist.map((n) => <Badge key={n} text={n} tone="tert" />)}</View> : null}
+                {completing === b.id ? (
+                  <CompleteForm b={b} onCancel={() => setCompleting(null)} onDone={(results, techNotes) => {
+                    patchBooking(b.id, { status: "done", results, techNotes, completedAt: Date.now() });
+                    setCompleting(null); haptic.success(); toast("Report sent to the customer.");
+                  }} />
+                ) : (
+                  <Animated.View layout={layout} style={{ gap: 10 }}>
+                    <Text style={{ fontFamily: F.mono, fontSize: 12, color: C.muted }}>
+                      Total <Text style={{ color: C.ink }}>{money(b.total)}</Text>{e ? <> · Margin <Text style={{ color: C.ink }}>{money0(e.margin)} ({Math.round(e.pct * 100)}%)</Text></> : null}
+                    </Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                      {b.status === "new" ? <><Btn small label="Confirm" onPress={() => { patchBooking(b.id, { status: "confirmed" }); haptic.success(); }} /><Btn small kind="danger" label="Decline" onPress={() => patchBooking(b.id, { status: "cancelled" })} /></> : null}
+                      {b.status === "confirmed" ? <><Btn small label="Complete with report" onPress={() => setCompleting(b.id)} /><Btn small kind="danger" label="Cancel" onPress={() => patchBooking(b.id, { status: "cancelled" })} /></> : null}
+                      {b.status === "cancelled" ? <Btn small kind="sec" label="Restore" onPress={() => patchBooking(b.id, { status: "new" })} /> : null}
+                      {b.status === "done" ? <Btn small kind="sec" label="View report" onPress={() => openReport(b.id)} /> : null}
+                      <Btn small kind="plain" label="Remove" onPress={() => removeBooking(b.id)} />
+                    </View>
+                  </Animated.View>
+                )}
+              </Panel>
+            );
+          }) : <Empty title="Nothing here" text="No jobs with that status." />}
+          <Btn kind="sec" small label={hasEx ? "Remove example jobs" : "Add example jobs"} onPress={() => { if (hasEx) { clearExamples(); toast("Removed example jobs."); } else { loadExamples(); toast("Added 4 example jobs."); } }} />
+          <Text style={T.small}>Margin assumes labour at ${LABOUR} per hour, travel cost by zone ($12, $18, $24) and supplies at {Math.round(SUPPLY * 100)}% of the pre-tax price. Swap in your real costs after the first jobs.</Text>
+        </>
+      )}
+    </Screen>
+  );
+}
