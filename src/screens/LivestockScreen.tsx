@@ -24,7 +24,7 @@ export default function LivestockScreen({ go }: { go: (t: TabId) => void }) {
           <Panel key={tank.type + f.id} index={i + 1}>
             <View style={{ flexDirection: "row", gap: 12 }}>
               <View style={{ width: 84, height: 84, borderRadius: R.md, backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}>
-                <CritterArt kind="fish" color={f.color} width={60} />
+                <CritterArt art={f.id} width={64} />
               </View>
               <View style={{ flex: 1, gap: 3 }}>
                 <Text style={[T.label, { letterSpacing: 0.8 }]}>{f.sci}</Text>

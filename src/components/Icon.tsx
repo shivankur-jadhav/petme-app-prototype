@@ -1,5 +1,6 @@
 import React from "react";
-import Svg, { Path } from "react-native-svg";
+import Svg, { Circle, ClipPath, Defs, G, Path } from "react-native-svg";
+import { FALLBACK, Part, SPECIES } from "./speciesArt";
 import { C } from "../theme";
 
 // Stroke icons on a 24px grid. Every shape is a path so they render the same on iOS and Android.
@@ -50,21 +51,30 @@ export function Icon({ name, size = 20, color = C.ink, width = 1.7 }: { name: st
   );
 }
 
-export function CritterArt({ kind, color, width = 40 }: { kind: "fish" | "inv"; color: string; width?: number }) {
-  const h = (width * 32) / 48;
-  if (kind === "inv") {
-    return (
-      <Svg width={width} height={h} viewBox="0 0 48 32">
-        <Path d="M10 26c-4-8 2-18 14-18s18 8 14 16" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" />
-        <Path d="M12 24c4 3 20 3 24 0" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" />
-        <Path d="M38 12l6-6M34 9l3-7" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" />
-      </Svg>
-    );
-  }
+/** Drawn species illustration (see speciesArt.ts). `art` is a key of SPECIES. */
+export function CritterArt({ art, width = 40 }: { art: string; width?: number }) {
+  const s = SPECIES[art] || SPECIES[FALLBACK];
+  const clip = "clip-" + art + "-" + width;
+  const fin = (p: Part, i: number) =>
+    p.stroke ? <Path key={i} d={p.d} fill="none" stroke={p.stroke} strokeWidth={p.w || 1} strokeLinecap="round" strokeLinejoin="round" opacity={p.o ?? 1} />
+      : <Path key={i} d={p.d} fill={p.fill} stroke={s.line} strokeWidth={0.7} strokeLinejoin="round" opacity={p.o ?? 1} />;
+  const mark = (p: Part, i: number) => (
+    <Path key={i} d={p.d} fill={p.fill || "none"} stroke={p.stroke} strokeWidth={p.stroke ? p.w || 1 : 0} strokeLinecap="round" strokeLinejoin="round" opacity={p.o ?? 1} />
+  );
+  const [ex, ey, er = 1.9] = s.eye;
   return (
-    <Svg width={width} height={h} viewBox="0 0 48 32">
-      <Path d="M4 16c6-10 20-12 28-4l10-6v20l-10-6c-8 8-22 6-28-4z" fill={color} />
-      <Path d="M14.8 14a1.8 1.8 0 1 1-3.6 0 1.8 1.8 0 0 1 3.6 0z" fill={C.bg} />
+    <Svg width={width} height={(width * 32) / 48} viewBox="0 0 48 32">
+      <Defs><ClipPath id={clip}><Path d={s.body} /></ClipPath></Defs>
+      {(s.behind || []).map(fin)}
+      <Path d={s.body} fill={s.base} />
+      <G clipPath={`url(#${clip})`}>
+        {(s.marks || []).map(mark)}
+        {(s.dots || []).map(([x, y, r, f], i) => <Circle key={i} cx={x} cy={y} r={r} fill={f} />)}
+      </G>
+      <Path d={s.body} fill="none" stroke={s.line} strokeWidth={0.9} strokeLinejoin="round" />
+      {(s.front || []).map(fin)}
+      <Circle cx={ex} cy={ey} r={er} fill="#F8FAFC" />
+      <Circle cx={ex - er * 0.15} cy={ey} r={er * 0.58} fill="#0B1220" />
     </Svg>
   );
 }

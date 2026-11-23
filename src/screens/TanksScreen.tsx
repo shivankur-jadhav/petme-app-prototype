@@ -95,7 +95,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
             <Animated.View key={tank.type + s.name} entering={FadeIn.delay(i * 40)} exiting={FadeOut.duration(120)} layout={layout}
               style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderTopColor: C.hair }}>
               <View style={{ width: 52, height: 52, borderRadius: 6, backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}>
-                <CritterArt kind={s.kind} color={s.color} />
+                <CritterArt art={s.art} width={44} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={T.h3}>{s.name}</Text>
