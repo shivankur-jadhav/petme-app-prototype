@@ -72,7 +72,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
         {next ? (
           <>
             <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 10 }}>
-              {[["Service", by(SERVICES, next.service)!.name], ["When", `${fmtDate(next.date)}, ${by(WINDOWS, next.win)!.start}`], ["Reference", next.ref], ["Total", money(next.total)]].map(([k, v]) => (
+              {[["Service", by(SERVICES, next.service)!.name], ["When", `${fmtDate(next.date)}, ${by(WINDOWS, next.win)!.start}`], ["Reference", next.ref], ["Due after visit", money(next.total)]].map(([k, v]) => (
                 <View key={k} style={{ width: "50%", paddingRight: 8 }}><Label>{k}</Label><Text style={T.body}>{v}</Text></View>
               ))}
             </View>

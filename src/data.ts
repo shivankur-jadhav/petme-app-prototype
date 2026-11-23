@@ -28,10 +28,13 @@ export type Booking = {
   base: number;
   discAmt: number;
   travel: number;
-  subtotal: number;
+  subtotal: number; // service charge before tax
   tax: number;
-  total: number;
+  total: number; // service charge, paid after the visit
   monthly: number;
+  bookFee?: number; // booking charge before tax, paid when booking (missing on bookings saved before this existed)
+  bookTax?: number;
+  bookTotal?: number;
   status: Status;
   example: boolean;
   createdAt: number;
@@ -95,6 +98,8 @@ export const ZONE_COST = { A: 12, B: 18, C: 24 };
 export const HST = 0.13;
 export const LABOUR = 32;
 export const SUPPLY = 0.1;
+/** Flat booking charge (before HST), paid when the customer books. The service charge is paid after the work. */
+export const BOOKING_FEE = 25;
 
 export function by<T extends { id: string }>(list: T[], id: string): T | undefined {
   return list.find((x) => x.id === id);
@@ -115,15 +120,25 @@ export function quote(s: { service: ServiceId; type: TankType; size: SizeId; rec
   const tax = round2(subtotal * HST);
   const total = round2(subtotal + tax);
   const monthly = rec && rec.perMonth ? round2(total * rec.perMonth) : 0;
-  return { svc, base, discAmt, zone, travel, subtotal, tax, total, monthly };
+  const bookFee = BOOKING_FEE;
+  const bookTax = round2(bookFee * HST);
+  const bookTotal = round2(bookFee + bookTax);
+  return { svc, base, discAmt, zone, travel, subtotal, tax, total, monthly, bookFee, bookTax, bookTotal, grand: round2(bookTotal + total) };
 }
+
+/** Booking charge (tax in) already paid, and the full amount for the visit. */
+export const bookingPaid = (b: Booking) => b.bookTotal || 0;
+export const grandTotal = (b: Booking) => round2(bookingPaid(b) + (b.total || 0));
+/** Pre-tax revenue for a visit: service charge plus booking charge. */
+export const revenue = (b: Booking) => (b.subtotal || 0) + (b.bookFee || 0);
 
 export function econ(b: Booking) {
   const svc = by(SERVICES, b.service);
   if (!svc || !b.subtotal) return null;
   const hours = svc.hours[b.size] || 1;
-  const margin = b.subtotal - hours * LABOUR - (ZONE_COST[b.zone] || 12) - b.subtotal * SUPPLY;
-  return { margin, pct: margin / b.subtotal };
+  const rev = revenue(b);
+  const margin = rev - hours * LABOUR - (ZONE_COST[b.zone] || 12) - b.subtotal * SUPPLY;
+  return { margin, pct: margin / rev };
 }
 
 export function tasksFor(b: Pick<Booking, "service" | "type">) {
@@ -242,6 +257,7 @@ export function makeBooking(
     recur: s.service === "clean" ? s.recur : "once", date: s.date, win: s.win,
     name: contact.name, phone: contact.phone, notes: contact.notes || "", sms: !!contact.sms, wishlist: contact.wishlist || [],
     base: q.base, discAmt: q.discAmt, travel: q.travel, subtotal: q.subtotal, tax: q.tax, total: q.total, monthly: q.monthly,
+    bookFee: q.bookFee, bookTax: q.bookTax, bookTotal: q.bookTotal,
     status: "new", example: false, createdAt: Date.now(),
     ...extra,
   };

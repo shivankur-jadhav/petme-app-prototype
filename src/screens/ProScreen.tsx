@@ -5,7 +5,7 @@ import { C, F, R, T } from "../theme";
 import { Badge, Btn, Chips, Empty, Field, Label, Panel, Screen, Title, enter, haptic, layout } from "../components/ui";
 import { TabId } from "../components/visuals";
 import { byNewest, useStore } from "../store";
-import { Booking, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, econ, fmtDate, metricsFor, money, money0 } from "../data";
+import { Booking, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, econ, fmtDate, grandTotal, metricsFor, money, money0, revenue } from "../data";
 import { StatusBadge, tankLine } from "./HistoryScreen";
 
 function CompleteForm({ b, onDone, onCancel }: { b: Booking; onDone: (r: Record<string, number>, notes: string) => void; onCancel: () => void }) {
@@ -41,12 +41,12 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
   const rows = [...bookings].sort(byNewest);
   const live = rows.filter((r) => r.status !== "cancelled");
   const open = rows.filter((r) => r.status === "new" || r.status === "confirmed").length;
-  const value = live.reduce((s, r) => s + (r.total || 0), 0);
+  const value = live.reduce((s, r) => s + grandTotal(r), 0);
   const seen: Record<string, 1> = {};
   let mrr = 0;
   live.forEach((r) => { const k = r.name + r.tankName; if (r.monthly && !seen[k]) { seen[k] = 1; mrr += r.monthly; } });
   let sub = 0, mar = 0;
-  live.forEach((r) => { const e = econ(r); if (e) { sub += r.subtotal; mar += e.margin; } });
+  live.forEach((r) => { const e = econ(r); if (e) { sub += revenue(r); mar += e.margin; } });
   const shown = rows.filter((r) => filter === "all" || r.status === filter);
   const hasEx = rows.some((r) => r.example);
 
@@ -93,7 +93,7 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
                 ) : (
                   <Animated.View layout={layout} style={{ gap: 10 }}>
                     <Text style={{ fontFamily: F.mono, fontSize: 12, color: C.muted }}>
-                      Total <Text style={{ color: C.ink }}>{money(b.total)}</Text>{e ? <> · Margin <Text style={{ color: C.ink }}>{money0(e.margin)} ({Math.round(e.pct * 100)}%)</Text></> : null}
+                      {b.bookTotal ? <>Booking <Text style={{ color: C.ink }}>{money(b.bookTotal)}</Text> paid · </> : null}{b.status === "done" ? "Service" : "Due after"} <Text style={{ color: C.ink }}>{money(b.total)}</Text>{e ? <> · Margin <Text style={{ color: C.ink }}>{money0(e.margin)} ({Math.round(e.pct * 100)}%)</Text></> : null}
                     </Text>
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                       {b.status === "new" ? <><Btn small label="Confirm" onPress={() => { patchBooking(b.id, { status: "confirmed" }); haptic.success(); }} /><Btn small kind="danger" label="Decline" onPress={() => patchBooking(b.id, { status: "cancelled" })} /></> : null}
@@ -108,7 +108,7 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
             );
           }) : <Empty title="Nothing here" text="No jobs with that status." />}
           <Btn kind="sec" small label={hasEx ? "Remove example jobs" : "Add example jobs"} onPress={() => { if (hasEx) { clearExamples(); toast("Removed example jobs."); } else { loadExamples(); toast("Added 4 example jobs."); } }} />
-          <Text style={T.small}>Margin assumes labour at ${LABOUR} per hour, travel cost by zone ($12, $18, $24) and supplies at {Math.round(SUPPLY * 100)}% of the pre-tax price. Swap in your real costs after the first jobs.</Text>
+          <Text style={T.small}>Margin assumes labour at ${LABOUR} per hour, travel cost by zone ($12, $18, $24) and supplies at {Math.round(SUPPLY * 100)}% of the pre-tax service price. Revenue includes the booking charge. Swap in your real costs after the first jobs.</Text>
         </>
       )}
     </Screen>

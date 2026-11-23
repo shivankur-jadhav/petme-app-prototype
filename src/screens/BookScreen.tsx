@@ -58,7 +58,7 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
         </Animated.View>
         <Text style={[T.h1, { fontFamily: F.mono, textAlign: "center" }]}>{b.ref}</Text>
         <Text style={[T.body, { textAlign: "center" }]}>{by(SERVICES, b.service)!.name} on {fmtDate(b.date)}, {by(WINDOWS, b.win)!.name}, in {b.city}.</Text>
-        <Text style={[T.small, { textAlign: "center" }]}>We will confirm your arrival window by text or phone.</Text>
+        <Text style={[T.small, { textAlign: "center" }]}>Booking charge of {money(b.bookTotal || 0)} paid. We will confirm your arrival window by text or phone.</Text>
         <Btn label="View visit details" onPress={() => { closeSheet(); openReport(b.id); }} />
         <Btn label="Done" kind="sec" onPress={closeSheet} />
       </View>
@@ -181,22 +181,32 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
           </View>
           <Ledger
             rows={[
+              ["Booking charge", money(q.bookFee)],
+              ["HST 13%", money(q.bookTax)],
+            ]}
+            totalLabel="Pay now"
+            totalSub="Charged when you book"
+            total={money(q.bookTotal)}
+          />
+          <View style={{ height: 6 }} />
+          <Ledger
+            rows={[
               [`Service: ${q.svc.name}`, money(q.base)],
               ...(q.discAmt ? [["Plan discount", money(-q.discAmt), true] as [string, string, boolean]] : []),
               ...(q.travel ? [[`Travel, zone ${q.zone}`, money(q.travel)] as [string, string]] : []),
               ["HST 13%", money(q.tax)],
             ]}
-            totalLabel={q.monthly ? "Per visit" : "Due after visit"}
-            totalSub={q.monthly ? `About ${money(q.monthly)} per month on this plan` : "Paid once the work is done"}
+            totalLabel={q.monthly ? "Service, per visit" : "Due after visit"}
+            totalSub={q.monthly ? `Paid after each visit. About ${money(q.monthly)} per month on this plan` : "Paid once the work is done"}
             total={money(q.total)}
           />
         </Panel>
 
         <Animated.View style={shakeStyle}>
-          <Btn label="Confirm and request visit" icon="cal" onPress={submit} />
+          <Btn label={`Confirm and pay ${money(q.bookTotal)}`} icon="cal" onPress={submit} />
         </Animated.View>
         {err ? <Animated.Text entering={FadeIn} style={{ color: C.crit, fontFamily: F.body500, textAlign: "center", marginTop: -6 }}>{err}</Animated.Text> : null}
-        <Text style={[T.small, { textAlign: "center", marginTop: -6 }]}>No payment now. You pay after the visit is done.</Text>
+        <Text style={[T.small, { textAlign: "center", marginTop: -6 }]}>You pay the {money(q.bookTotal)} booking charge now and the service charge after the visit.</Text>
       </Screen>
     </KeyboardAvoidingView>
   );

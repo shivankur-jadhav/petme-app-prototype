@@ -7,7 +7,7 @@ import { Icon } from "../components/Icon";
 import { Badge, Btn, Empty, Label, Ledger, Panel, Press, Screen, SecHeader, Title, enter, haptic, layout } from "../components/ui";
 import { MetricGrid, TabId } from "../components/visuals";
 import { byNewest, useStore } from "../store";
-import { Booking, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, fmtDate, fmtDur, metricsFor, money, tasksFor } from "../data";
+import { Booking, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, fmtDate, fmtDur, grandTotal, metricsFor, money, tasksFor } from "../data";
 
 export const STATUS: Record<string, [string, string]> = { new: ["Requested", "tert"], confirmed: ["Confirmed", "cyan"], done: ["Completed", "ok"], cancelled: ["Cancelled", "slate"] };
 export const StatusBadge = ({ s }: { s: string }) => <Badge text={STATUS[s]?.[0] || s} tone={STATUS[s]?.[1] || "slate"} dot pulse={s === "new" || s === "confirmed"} />;
@@ -28,7 +28,7 @@ export default function HistoryScreen({ openReport, go }: { openReport: (id: str
               <StatusBadge s={b.status} />
             </View>
             <View style={s.kv}>
-              {[["Date", fmtDate(b.date)], ["Reference", b.ref], ["Tank", tankLine(b)], ["Total", money(b.total)]].map(([k, v]) => (
+              {[["Date", fmtDate(b.date)], ["Reference", b.ref], ["Tank", tankLine(b)], b.status === "done" ? ["Total paid", money(grandTotal(b))] : ["Due after visit", money(b.total)]].map(([k, v]) => (
                 <View key={k} style={s.kvCell}><Label>{k}</Label><Text style={[T.body, k === "Reference" && { fontFamily: F.mono }]}>{v}</Text></View>
               ))}
             </View>
@@ -123,10 +123,21 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
 
         <Panel index={6} flat>
           <Label>Billing</Label>
+          {b.bookTotal ? (
+            <>
+              <Ledger
+                rows={[["Booking charge", money(b.bookFee || 0)], ["HST 13%", money(b.bookTax || 0)]]}
+                totalLabel="Paid at booking"
+                totalSub="Charged when the visit was booked"
+                total={money(b.bookTotal)}
+              />
+              <View style={{ height: 6 }} />
+            </>
+          ) : null}
           <Ledger
             rows={[["Service", money(b.base)], ...(b.discAmt ? [["Plan discount", money(-b.discAmt), true] as [string, string, boolean]] : []), ...(b.travel ? [["Travel", money(b.travel)] as [string, string]] : []), ["HST 13%", money(b.tax)]]}
-            totalLabel={done ? "Total paid" : "Due after visit"}
-            totalSub={b.recur !== "once" ? `${by(RECUR, b.recur)?.name} plan` : "One visit"}
+            totalLabel={done ? "Paid after visit" : b.status === "cancelled" ? "Service charge, not charged" : "Due after visit"}
+            totalSub={[b.recur !== "once" ? `${by(RECUR, b.recur)?.name} plan` : "One visit", done && b.bookTotal ? `${money(grandTotal(b))} in total` : ""].filter(Boolean).join(" · ")}
             total={money(b.total)}
           />
         </Panel>
