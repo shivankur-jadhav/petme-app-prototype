@@ -48,7 +48,7 @@ export type Booking = {
   total: number; // service charge, paid after the visit
   monthly: number;
   bookFee?: number; // booking charge before tax, paid when booking (missing on bookings saved before this existed)
-  bookTax?: number;
+  bookTax?: number; // 0 on new bookings; older bookings saved on the phone may have HST here
   bookTotal?: number;
   cancelledAt?: number;
   bookRefunded?: boolean; // set on cancel: true when the booking charge went back to the customer
@@ -115,7 +115,7 @@ export const ZONE_COST = { A: 12, B: 18, C: 24 };
 export const HST = 0.13;
 export const LABOUR = 32;
 export const SUPPLY = 0.1;
-/** Flat booking charge (before HST), paid when the customer books. The service charge is paid after the work. */
+/** Flat booking charge (no HST), paid when the customer books. The service charge is paid after the work. */
 export const BOOKING_FEE = 25;
 /** The booking charge is refunded when the customer cancels more than this many hours before the arrival window starts. */
 export const REFUND_HOURS = 24;
@@ -140,7 +140,7 @@ export function quote(s: { service: ServiceId; type: TankType; size: SizeId; rec
   const total = round2(subtotal + tax);
   const monthly = rec && rec.perMonth ? round2(total * rec.perMonth) : 0;
   const bookFee = BOOKING_FEE;
-  const bookTax = round2(bookFee * HST);
+  const bookTax = 0; // the booking charge has no HST; HST applies to the service charge only
   const bookTotal = round2(bookFee + bookTax);
   return { svc, base, discAmt, zone, travel, subtotal, tax, total, monthly, bookFee, bookTax, bookTotal, grand: round2(bookTotal + total) };
 }

@@ -56,6 +56,8 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
   const svc = by(SERVICES, b.service)!;
   const done = b.status === "done";
   const tasks = tasksFor(b);
+  // Older bookings were charged HST on the booking charge; show it only for those.
+  const bookHst: [string, string][] = b.bookTax ? [["HST 13%", money(b.bookTax)]] : [];
   return (
     <Animated.View entering={SlideInRight.springify().damping(22).stiffness(200)} exiting={SlideOutRight.duration(220)} style={[StyleSheet.absoluteFill, { backgroundColor: C.bg }]}>
       <ScrollView contentContainerStyle={{ paddingTop: ins.top + 10, paddingHorizontal: 16, paddingBottom: ins.bottom + 112, gap: 16 }} showsVerticalScrollIndicator={false}>
@@ -127,14 +129,14 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
             <>
               {b.status === "cancelled" ? (
                 <Ledger
-                  rows={[["Booking charge", money(b.bookFee || 0)], ["HST 13%", money(b.bookTax || 0)], ...(b.bookRefunded ? [["Refunded", money(-b.bookTotal), true] as [string, string, boolean]] : [])]}
+                  rows={[["Booking charge", money(b.bookFee || 0)], ...bookHst, ...(b.bookRefunded ? [["Refunded", money(-b.bookTotal), true] as [string, string, boolean]] : [])]}
                   totalLabel={b.bookRefunded ? "Booking charge refunded" : "Booking charge kept"}
                   totalSub={b.bookRefunded ? "Visit cancelled more than 24 hours ahead" : "Visit cancelled less than 24 hours ahead"}
                   total={money(b.bookRefunded ? 0 : b.bookTotal)}
                 />
               ) : (
                 <Ledger
-                  rows={[["Booking charge", money(b.bookFee || 0)], ["HST 13%", money(b.bookTax || 0)]]}
+                  rows={[["Booking charge", money(b.bookFee || 0)], ...bookHst]}
                   totalLabel="Paid at booking"
                   totalSub="Refunded if you cancel more than 24 hours before the visit"
                   total={money(b.bookTotal)}

@@ -192,7 +192,6 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
           <Ledger
             rows={[
               ["Booking charge", money(q.bookFee)],
-              ["HST 13%", money(q.bookTax)],
             ]}
             totalLabel="Pay now"
             totalSub="Charged when you book"
