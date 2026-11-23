@@ -6,22 +6,23 @@ import { Icon } from "../components/Icon";
 import { Badge, Btn, Check, Chips, Field, Label, Ledger, Panel, Press, Screen, SecHeader, Segmented, Title, haptic, layout } from "../components/ui";
 import { useStore } from "../store";
 import {
-  ALL_IDEAS, CITIES, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, dateOptions, fmtDate, fmtDur, makeBooking, money, money0, quote,
+  ALL_IDEAS, CITIES, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, addressLine, dateOptions, fmtDate, fmtDur, makeBooking, phoneOk, money, money0, quote,
   RecurId, ServiceId, SizeId, TankType,
 } from "../data";
 
 export default function BookScreen({ showSheet, closeSheet, openReport }: { showSheet: (n: React.ReactNode) => void; closeSheet: () => void; openReport: (id: string) => void }) {
-  const { tank, setTank, wish, clearWish, addBooking } = useStore();
+  const { tank, setTank, wish, clearWish, addBooking, profile, setProfile } = useStore();
   const [service, setService] = useState<ServiceId>("clean");
   const [recur, setRecur] = useState<RecurId>("w4");
-  const [city, setCity] = useState("Toronto");
+  const [city, setCity] = useState(profile.city || "Toronto");
   const [date, setDate] = useState("");
   const [win, setWin] = useState("am");
   const [notes, setNotes] = useState("");
-  const [sms, setSms] = useState(true);
+  const [sms, setSms] = useState(profile.smsEta);
   const [away, setAway] = useState(false);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(profile.name);
+  const [phone, setPhone] = useState(profile.phone);
+  const [address, setAddress] = useState(addressLine(profile));
   const [err, setErr] = useState("");
 
   const days = useMemo(() => dateOptions(service), [service]);
@@ -39,12 +40,20 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
   const submit = () => {
     if (!date) return fail("Pick a day for the visit.");
     if (!name.trim()) return fail("Add your name.");
-    if (phone.replace(/\D/g, "").length < 7) return fail("Add a phone number we can reach you on.");
+    if (!phoneOk(phone)) return fail("Add a phone number we can reach you on.");
+    if (!address.trim()) return fail("Add the address for the visit.");
     setErr("");
     const b = makeBooking(
       { service, type: tank.type, size: tank.size, recur, city, date, win, tankName: tank.name },
-      { name: name.trim(), phone: phone.trim(), notes: (notes.trim() + (away ? " (Customer may not be home.)" : "")).trim(), sms, wishlist: wishItems.map((i) => i!.name) }
+      {
+        name: name.trim(), phone: phone.trim(), address: address.trim(), sms, wishlist: wishItems.map((i) => i!.name),
+        notes: [notes.trim(), profile.access ? `Access: ${profile.access}` : "", away ? "(Customer may not be home.)" : ""].filter(Boolean).join(" "),
+      }
     );
+    // First booking fills in any blank profile details, so the next booking is quicker.
+    if (!profile.name || !profile.phone || !profile.street) {
+      setProfile({ name: profile.name || name.trim(), phone: profile.phone || phone.trim(), street: profile.street || address.trim(), city: profile.street ? profile.city : city });
+    }
     addBooking(b); clearWish(); haptic.success();
     setDate(""); setNotes(""); setAway(false);
     showSheet(
@@ -167,11 +176,12 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
         </Panel>
 
         <Panel index={5}>
-          <Text style={T.h2}>Your details</Text>
+          <SecHeader title="Your details" right={profile.since ? <Label color={C.primary}>From your profile</Label> : null} />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
             <Field label="Name" value={name} onChangeText={setName} autoComplete="name" textContentType="name" />
             <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" />
           </View>
+          <Field label={`Visit address in ${city}`} value={address} onChangeText={setAddress} autoComplete="street-address" textContentType="fullStreetAddress" placeholder="Street, unit, postal code" />
         </Panel>
 
         <Panel index={6} flat>

@@ -1,8 +1,8 @@
-// App state: tank profile, bookings, livestock wishlist. Saved on the phone with AsyncStorage.
+// App state: customer profile, tank profile, bookings, livestock wishlist. Saved on the phone with AsyncStorage.
 // Next step for a real launch: move bookings to a shared backend (e.g. Supabase) so customers and technicians see the same jobs.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Booking, Tank, exampleBookings } from "./data";
+import { Booking, EMPTY_PROFILE, Profile, Tank, exampleBookings } from "./data";
 
 const KEY = "petme:v1";
 
@@ -11,8 +11,12 @@ type Store = {
   tank: Tank;
   bookings: Booking[];
   wish: string[];
+  profile: Profile;
+  profileOpen: boolean;
   toastMsg: { id: number; text: string } | null;
   setTank: (t: Tank) => void;
+  setProfile: (p: Partial<Profile>) => void;
+  setProfileOpen: (open: boolean) => void;
   addBooking: (b: Booking) => void;
   patchBooking: (id: string, p: Partial<Booking>) => void;
   removeBooking: (id: string) => void;
@@ -31,6 +35,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [tank, setTankState] = useState<Tank>(DEFAULT_TANK);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [wish, setWish] = useState<string[]>([]);
+  const [profile, setProfileState] = useState<Profile>(EMPTY_PROFILE);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [toastMsg, setToast] = useState<{ id: number; text: string } | null>(null);
   const toastTimer = useRef<any>(null);
 
@@ -42,6 +48,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (s.tank) setTankState(s.tank);
         if (Array.isArray(s.bookings)) setBookings(s.bookings);
         if (Array.isArray(s.wish)) setWish(s.wish);
+        if (s.profile) setProfileState({ ...EMPTY_PROFILE, ...s.profile });
       })
       .catch(() => {})
       .finally(() => setReady(true));
@@ -49,8 +56,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(KEY, JSON.stringify({ tank, bookings, wish })).catch(() => {});
-  }, [ready, tank, bookings, wish]);
+    AsyncStorage.setItem(KEY, JSON.stringify({ tank, bookings, wish, profile })).catch(() => {});
+  }, [ready, tank, bookings, wish, profile]);
 
   const toast = useCallback((text: string) => {
     clearTimeout(toastTimer.current);
@@ -59,8 +66,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<Store>(() => ({
-    ready, tank, bookings, wish, toastMsg, toast,
+    ready, tank, bookings, wish, profile, profileOpen, toastMsg, toast,
     setTank: (t) => setTankState(t),
+    setProfile: (p) => setProfileState((prev) => ({ ...prev, ...p, since: prev.since || Date.now() })),
+    setProfileOpen,
     addBooking: (b) => setBookings((prev) => [b, ...prev]),
     patchBooking: (id, p) => setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, ...p } : b))),
     removeBooking: (id) => setBookings((prev) => prev.filter((b) => b.id !== id)),
@@ -72,7 +81,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     clearWish: () => setWish([]),
     loadExamples: () => setBookings((prev) => [...exampleBookings(), ...prev]),
     clearExamples: () => setBookings((prev) => prev.filter((b) => !b.example)),
-  }), [ready, tank, bookings, wish, toastMsg, toast]);
+  }), [ready, tank, bookings, wish, profile, profileOpen, toastMsg, toast]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

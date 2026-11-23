@@ -80,7 +80,7 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
                   <StatusBadge s={b.status} />
                 </View>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 8 }}>
-                  {[["When", `${fmtDate(b.date)}, ${by(WINDOWS, b.win)?.start}`], ["Customer", b.name], ["Phone", b.phone], ["Location", `${b.city} (zone ${b.zone})`], ["Tank", tankLine(b)], ["Plan", b.recur !== "once" ? by(RECUR, b.recur)!.name : "One visit"]].map(([k, v]) => (
+                  {[["When", `${fmtDate(b.date)}, ${by(WINDOWS, b.win)?.start}`], ["Customer", b.name], ["Phone", b.phone], ["Location", `${b.address ? b.address + ", " : ""}${b.city} (zone ${b.zone})`], ["Tank", tankLine(b)], ["Plan", b.recur !== "once" ? by(RECUR, b.recur)!.name : "One visit"]].map(([k, v]) => (
                     <View key={k} style={{ width: "50%", paddingRight: 8 }}><Label>{k}</Label><Text style={T.body}>{v}</Text></View>
                   ))}
                 </View>

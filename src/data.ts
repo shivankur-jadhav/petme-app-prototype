@@ -8,6 +8,20 @@ export type Status = "new" | "confirmed" | "done" | "cancelled";
 
 export type Tank = { name: string; type: TankType; size: SizeId; sample: boolean };
 
+/** The customer's own details, saved on the phone and used to fill in bookings. */
+export type Profile = {
+  name: string; phone: string; email: string;
+  street: string; unit: string; postal: string; city: string; access: string;
+  smsEta: boolean; reminders: boolean;
+  since: number; // first time the profile was saved, 0 if never
+};
+export const EMPTY_PROFILE: Profile = { name: "", phone: "", email: "", street: "", unit: "", postal: "", city: "Toronto", access: "", smsEta: true, reminders: true, since: 0 };
+export const initials = (name: string) => name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
+export const addressLine = (p: Pick<Profile, "street" | "unit" | "postal">) => [p.unit ? `${p.unit}-${p.street}` : p.street, p.postal.toUpperCase()].filter((x) => x.trim()).join(", ");
+export const validEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+export const validPostal = (s: string) => /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(s.trim());
+export const phoneOk = (s: string) => s.replace(/\D/g, "").length >= 7;
+
 export type Booking = {
   id: string;
   ref: string;
@@ -22,6 +36,7 @@ export type Booking = {
   win: string;
   name: string;
   phone: string;
+  address?: string; // street, unit and postal code for the visit
   notes: string;
   sms: boolean;
   wishlist: string[];
@@ -147,6 +162,12 @@ export const restorePatch: Partial<Booking> = { status: "new", cancelledAt: unde
 /** Booking charge (tax in) already paid, and the full amount for the visit. */
 export const bookingPaid = (b: Booking) => b.bookTotal || 0;
 export const grandTotal = (b: Booking) => round2(bookingPaid(b) + (b.total || 0));
+/** What the customer has actually paid for a visit so far, after any refund. */
+export function paidSoFar(b: Booking) {
+  if (b.status === "done") return grandTotal(b);
+  if (b.status === "cancelled") return b.bookRefunded ? 0 : bookingPaid(b);
+  return bookingPaid(b);
+}
 /** Pre-tax revenue for a visit: service charge plus booking charge. */
 export const revenue = (b: Booking) => (b.subtotal || 0) + (b.bookFee || 0);
 
@@ -265,7 +286,7 @@ export function dateOptions(service: ServiceId) {
 
 export function makeBooking(
   s: { service: ServiceId; type: TankType; size: SizeId; recur: RecurId; city: string; date: string; win: string; tankName?: string },
-  contact: { name: string; phone: string; notes?: string; sms?: boolean; wishlist?: string[] },
+  contact: { name: string; phone: string; address?: string; notes?: string; sms?: boolean; wishlist?: string[] },
   extra: Partial<Booking> = {}
 ): Booking {
   const q = quote(s);
@@ -273,7 +294,7 @@ export function makeBooking(
     id: newId(), ref: newRef(),
     service: s.service, type: s.type, size: s.size, tankName: s.tankName || "", city: s.city, zone: q.zone,
     recur: s.service === "clean" ? s.recur : "once", date: s.date, win: s.win,
-    name: contact.name, phone: contact.phone, notes: contact.notes || "", sms: !!contact.sms, wishlist: contact.wishlist || [],
+    name: contact.name, phone: contact.phone, address: contact.address || "", notes: contact.notes || "", sms: !!contact.sms, wishlist: contact.wishlist || [],
     base: q.base, discAmt: q.discAmt, travel: q.travel, subtotal: q.subtotal, tax: q.tax, total: q.total, monthly: q.monthly,
     bookFee: q.bookFee, bookTax: q.bookTax, bookTotal: q.bookTotal,
     status: "new", example: false, createdAt: Date.now(),

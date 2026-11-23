@@ -14,27 +14,29 @@ import BookScreen from "./src/screens/BookScreen";
 import HistoryScreen, { ReportScreen } from "./src/screens/HistoryScreen";
 import LivestockScreen from "./src/screens/LivestockScreen";
 import ProScreen from "./src/screens/ProScreen";
+import ProfileScreen from "./src/screens/ProfileScreen";
 
 function Shell() {
-  const { ready, bookings, wish } = useStore();
+  const { ready, bookings, wish, profileOpen, setProfileOpen } = useStore();
   const [tab, setTab] = useState<TabId>("tanks");
   const [reportId, setReportId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<React.ReactNode>(null);
 
-  const go = useCallback((t: TabId) => { setReportId(null); setTab(t); }, []);
+  const go = useCallback((t: TabId) => { setReportId(null); setProfileOpen(false); setTab(t); }, []);
   const openReport = useCallback((id: string) => setReportId(id), []);
   const closeSheet = useCallback(() => setSheet(null), []);
 
-  // Android back button closes the sheet, then the report, then returns to Tanks.
+  // Android back button closes the sheet, then the report, then the profile, then returns to Tanks.
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       if (sheet) { setSheet(null); return true; }
       if (reportId) { setReportId(null); return true; }
+      if (profileOpen) { setProfileOpen(false); return true; }
       if (tab !== "tanks") { setTab("tanks"); return true; }
       return false;
     });
     return () => sub.remove();
-  }, [sheet, reportId, tab]);
+  }, [sheet, reportId, profileOpen, tab]);
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: C.bg }} />;
 
@@ -50,6 +52,7 @@ function Shell() {
         {tab === "livestock" && <LivestockScreen go={go} />}
         {tab === "pro" && <ProScreen {...props} />}
       </Animated.View>
+      {profileOpen ? <ProfileScreen onClose={() => setProfileOpen(false)} go={go} /> : null}
       {reportId ? <ReportScreen id={reportId} onClose={() => setReportId(null)} go={go} /> : null}
       <TabBar value={tab} onChange={go} badges={{ pro: open || undefined, livestock: wish.length || undefined }} />
       <Sheet open={!!sheet} onClose={closeSheet}>{sheet}</Sheet>

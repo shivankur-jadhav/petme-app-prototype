@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R, SPRING, T } from "../theme";
 import { Icon } from "./Icon";
 import { useStore } from "../store";
+import { initials } from "../data";
 
 export const haptic = {
   tap: () => { Haptics.selectionAsync().catch(() => {}); },
@@ -163,7 +164,7 @@ export function Segmented<T extends string>({ items, value, onChange }: { items:
 
 export function Chips<T extends string>({ items, value, onChange }: { items: { id: T; label: string }[]; value: T; onChange: (id: T) => void }) {
   return (
-    <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
+    <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
       {items.map((it) => {
         const on = it.id === value;
         return (
@@ -236,7 +237,8 @@ export function Empty({ title, text, children }: { title: string; text: string; 
 }
 
 export function AppBar() {
-  const { bookings } = useStore();
+  const { bookings, profile, setProfileOpen } = useStore();
+  const mono = initials(profile.name);
   const open = bookings.filter((b) => b.status === "new" || b.status === "confirmed").length;
   return (
     <View style={st.appbar}>
@@ -250,7 +252,10 @@ export function AppBar() {
           </View>
         </View>
       </View>
-      <View style={st.avatar}><Text style={{ fontFamily: F.head600, color: C.ink }}>Me</Text><View style={st.avatarDot} /></View>
+      <Press onPress={() => setProfileOpen(true)} accessibilityRole="button" accessibilityLabel="Your profile" style={st.avatar}>
+        <Text style={{ fontFamily: F.head600, color: C.ink }}>{mono || "Me"}</Text>
+        {!profile.since ? <View style={st.avatarDot} /> : null}
+      </Press>
     </View>
   );
 }

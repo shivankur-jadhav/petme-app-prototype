@@ -31,7 +31,7 @@ Source: `reference/stitch/DESIGN.md` and the four screen PNGs next to it. Tokens
 
 ## Known gaps / roadmap
 1. Shared backend (Supabase suggested: Postgres + auth + realtime) so customers and technicians see the same bookings; split technician screens behind a role.
-2. Phone-number sign-in (OTP), saved addresses, multiple tanks per customer.
+2. Phone-number sign-in (OTP), multiple saved addresses, multiple tanks per customer. (One profile with one address is saved on the phone today: `Profile` in `src/data.ts`, opened from the header avatar.)
 3. Payments after the visit (Stripe), plan billing.
 4. Push notifications: booking confirmed, tech 15 minutes away, report ready.
 5. Real livestock records per tank, editable by the technician.
