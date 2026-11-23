@@ -11,18 +11,25 @@ import {
 } from "../data";
 
 export default function BookScreen({ showSheet, closeSheet, openReport }: { showSheet: (n: React.ReactNode) => void; closeSheet: () => void; openReport: (id: string) => void }) {
-  const { tank, setTank, wish, clearWish, addBooking, profile, setProfile } = useStore();
+  const { tank, setTank, wish, clearWish, addBooking, profile, setProfile, setProfileOpen } = useStore();
+  const hasProfile = !!(profile.name.trim() && profile.phone.trim() && profile.street.trim());
   const [service, setService] = useState<ServiceId>("clean");
   const [recur, setRecur] = useState<RecurId>("w4");
-  const [city, setCity] = useState(profile.city || "Toronto");
+  const [city, setCity] = useState(hasProfile ? profile.city : "Toronto");
   const [date, setDate] = useState("");
   const [win, setWin] = useState("am");
   const [notes, setNotes] = useState("");
   const [sms, setSms] = useState(profile.smsEta);
   const [away, setAway] = useState(false);
-  const [name, setName] = useState(profile.name);
-  const [phone, setPhone] = useState(profile.phone);
-  const [address, setAddress] = useState(addressLine(profile));
+  // Tick "Use the details in my profile" to book with the saved profile; untick to enter other details.
+  const [useProfile, setUseProfile] = useState(hasProfile);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const det = useProfile ? { name: profile.name, phone: profile.phone, address: addressLine(profile) } : { name, phone, address };
+  const toggleProfile = (on: boolean) => { setUseProfile(on); setErr(""); if (on) setCity(profile.city); };
+  // The profile address belongs to the profile's city, so picking another city switches to typed details.
+  const pickCity = (c: string) => { setCity(c); if (useProfile && c !== profile.city) setUseProfile(false); };
   const [err, setErr] = useState("");
 
   const days = useMemo(() => dateOptions(service), [service]);
@@ -39,20 +46,20 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
 
   const submit = () => {
     if (!date) return fail("Pick a day for the visit.");
-    if (!name.trim()) return fail("Add your name.");
-    if (!phoneOk(phone)) return fail("Add a phone number we can reach you on.");
-    if (!address.trim()) return fail("Add the address for the visit.");
+    if (!det.name.trim()) return fail("Add your name.");
+    if (!phoneOk(det.phone)) return fail("Add a phone number we can reach you on.");
+    if (!det.address.trim()) return fail("Add the address for the visit.");
     setErr("");
     const b = makeBooking(
       { service, type: tank.type, size: tank.size, recur, city, date, win, tankName: tank.name },
       {
-        name: name.trim(), phone: phone.trim(), address: address.trim(), sms, wishlist: wishItems.map((i) => i!.name),
-        notes: [notes.trim(), profile.access ? `Access: ${profile.access}` : "", away ? "(Customer may not be home.)" : ""].filter(Boolean).join(" "),
+        name: det.name.trim(), phone: det.phone.trim(), address: det.address.trim(), sms, wishlist: wishItems.map((i) => i!.name),
+        notes: [notes.trim(), useProfile && profile.access ? `Access: ${profile.access}` : "", away ? "(Customer may not be home.)" : ""].filter(Boolean).join(" "),
       }
     );
     // First booking fills in any blank profile details, so the next booking is quicker.
-    if (!profile.name || !profile.phone || !profile.street) {
-      setProfile({ name: profile.name || name.trim(), phone: profile.phone || phone.trim(), street: profile.street || address.trim(), city: profile.street ? profile.city : city });
+    if (!hasProfile) {
+      setProfile({ name: profile.name || det.name.trim(), phone: profile.phone || det.phone.trim(), street: profile.street || det.address.trim(), city: profile.street ? profile.city : city });
     }
     addBooking(b); clearWish(); haptic.success();
     setDate(""); setNotes(""); setAway(false);
@@ -135,7 +142,7 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
         <Panel index={3}>
           <SecHeader title="Service window" right={<Label color={date ? C.primary : C.muted}>{date ? fmtDate(date) : "Pick a day"}</Label>} />
           <Label>City</Label>
-          <Chips items={Object.keys(CITIES).map((c) => ({ id: c, label: c + (CITIES[c] === "A" ? "" : CITIES[c] === "B" ? " · +$25" : " · +$45") }))} value={city} onChange={setCity} />
+          <Chips items={Object.keys(CITIES).map((c) => ({ id: c, label: c + (CITIES[c] === "A" ? "" : CITIES[c] === "B" ? " · +$25" : " · +$45") }))} value={city} onChange={pickCity} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
             {days.map((d) => {
               const on = d.id === date;
@@ -176,12 +183,33 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
         </Panel>
 
         <Panel index={5}>
-          <SecHeader title="Your details" right={profile.since ? <Label color={C.primary}>From your profile</Label> : null} />
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-            <Field label="Name" value={name} onChangeText={setName} autoComplete="name" textContentType="name" />
-            <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" />
-          </View>
-          <Field label={`Visit address in ${city}`} value={address} onChangeText={setAddress} autoComplete="street-address" textContentType="fullStreetAddress" placeholder="Street, unit, postal code" />
+          <SecHeader title="Your details" right={useProfile ? <Label color={C.primary}>From your profile</Label> : null} />
+          {hasProfile ? (
+            <Check label="Use the details in my profile" value={useProfile} onChange={toggleProfile} />
+          ) : (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text style={[T.small, { flex: 1 }]}>Save your name, phone and address in your profile to fill these in with one tap.</Text>
+              <Btn small kind="sec" label="Open profile" onPress={() => setProfileOpen(true)} />
+            </View>
+          )}
+          {useProfile ? (
+            <Animated.View key="profile" entering={FadeIn.duration(200)} layout={layout} style={{ gap: 10 }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 10 }}>
+                {[["Name", profile.name], ["Phone", profile.phone], [`Address in ${profile.city}`, addressLine(profile)], ...(profile.access ? [["Access notes", profile.access]] : [])].map(([k, v]) => (
+                  <View key={k} style={{ width: k === "Name" || k === "Phone" ? "50%" : "100%", paddingRight: 8 }}><Label>{k}</Label><Text style={T.body}>{v}</Text></View>
+                ))}
+              </View>
+              <Btn small kind="plain" icon="edit" label="Edit in profile" onPress={() => setProfileOpen(true)} />
+            </Animated.View>
+          ) : (
+            <Animated.View key="typed" entering={FadeIn.duration(200)} layout={layout} style={{ gap: 12 }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                <Field label="Name" value={name} onChangeText={setName} autoComplete="name" textContentType="name" />
+                <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" />
+              </View>
+              <Field label={`Visit address in ${city}`} value={address} onChangeText={setAddress} autoComplete="street-address" textContentType="fullStreetAddress" placeholder="Street, unit, postal code" style={{ flexGrow: 0, flexShrink: 0, flexBasis: "auto" }} />
+            </Animated.View>
+          )}
         </Panel>
 
         <Panel index={6} flat>

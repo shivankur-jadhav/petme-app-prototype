@@ -186,6 +186,7 @@ export function Field({ label, style, ...props }: TextInputProps & { label: stri
     <View style={[{ gap: 6, flex: 1, minWidth: 140 }, style]}>
       <Text style={st.fieldLabel}>{label}</Text>
       <TextInput
+        accessibilityLabel={label}
         placeholderTextColor={C.faint}
         selectionColor={C.primary}
         onFocus={() => setFocus(true)}
