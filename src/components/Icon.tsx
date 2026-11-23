@@ -5,7 +5,7 @@ import { C } from "../theme";
 // Stroke icons on a 24px grid. Every shape is a path so they render the same on iOS and Android.
 const P: Record<string, string[]> = {
   waves: ["M3 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0", "M3 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0", "M3 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"],
-  cal: ["M5.5 5h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z", "M3.5 10h17M8 3v4M16 3v4"],
+  cal: ["M5.5 5h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z", "M3.5 10h17M8 3v4M16 3v4", "M8 13.5v.1M12 13.5v.1M16 13.5v.1M8 17v.1M12 17v.1M16 17v.1"],
   clock: ["M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0z", "M12 7.5V12l3 2"],
   fish: ["M3 12c3-5 9-6 13-2l5-3v10l-5-3c-4 4-10 3-13-2z", "M8 11.3v.1"],
   // Clownfish outline: body, fan tail, dorsal + pectoral fins, two curved stripes, eye.
