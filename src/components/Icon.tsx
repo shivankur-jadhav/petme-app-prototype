@@ -41,13 +41,20 @@ const P: Record<string, string[]> = {
 
 export type IconName = keyof typeof P;
 
+// Wide, short shapes look smaller than square ones at the same size. Scale them up around the
+// centre so every tab icon carries the same visual weight; stroke width is compensated below.
+const SCALE: Record<string, number> = { clown: 1.25 };
+
 export function Icon({ name, size = 20, color = C.ink, width = 1.7 }: { name: string; size?: number; color?: string; width?: number }) {
   const paths = P[name] || [];
+  const k = SCALE[name] || 1;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      {paths.map((d, i) => (
-        <Path key={i} d={d} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
-      ))}
+      <G transform={k === 1 ? undefined : `translate(12 12) scale(${k}) translate(-12 -12)`}>
+        {paths.map((d, i) => (
+          <Path key={i} d={d} fill="none" stroke={color} strokeWidth={width / k} strokeLinecap="round" strokeLinejoin="round" />
+        ))}
+      </G>
     </Svg>
   );
 }
