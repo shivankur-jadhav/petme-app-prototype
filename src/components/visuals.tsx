@@ -164,7 +164,7 @@ export const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: "tanks", label: "Tanks", icon: "waves" },
   { id: "book", label: "Book", icon: "cal" },
   { id: "history", label: "History", icon: "clock" },
-  { id: "livestock", label: "Livestock", icon: "fish" },
+  { id: "livestock", label: "Livestock", icon: "clown" },
   { id: "pro", label: "Pro jobs", icon: "pro" },
 ];
 
