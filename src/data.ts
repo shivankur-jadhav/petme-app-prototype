@@ -35,6 +35,8 @@ export type Booking = {
   bookFee?: number; // booking charge before tax, paid when booking (missing on bookings saved before this existed)
   bookTax?: number;
   bookTotal?: number;
+  cancelledAt?: number;
+  bookRefunded?: boolean; // set on cancel: true when the booking charge went back to the customer
   status: Status;
   example: boolean;
   createdAt: number;
@@ -83,9 +85,9 @@ export const RECUR: { id: RecurId; name: string; sub: string; disc: number; perM
 ];
 
 export const WINDOWS = [
-  { id: "am", icon: "sunrise", name: "9:00 AM – 12:00 PM", start: "9:00 AM", sub: "Morning window" },
-  { id: "mid", icon: "sun", name: "12:00 PM – 3:00 PM", start: "12:00 PM", sub: "Midday window" },
-  { id: "pm", icon: "moon", name: "3:00 PM – 6:00 PM", start: "3:00 PM", sub: "Late afternoon window" },
+  { id: "am", icon: "sunrise", name: "9:00 AM – 12:00 PM", start: "9:00 AM", hour: 9, sub: "Morning window" },
+  { id: "mid", icon: "sun", name: "12:00 PM – 3:00 PM", start: "12:00 PM", hour: 12, sub: "Midday window" },
+  { id: "pm", icon: "moon", name: "3:00 PM – 6:00 PM", start: "3:00 PM", hour: 15, sub: "Late afternoon window" },
 ];
 
 export const CITIES: Record<string, "A" | "B" | "C"> = {
@@ -100,6 +102,8 @@ export const LABOUR = 32;
 export const SUPPLY = 0.1;
 /** Flat booking charge (before HST), paid when the customer books. The service charge is paid after the work. */
 export const BOOKING_FEE = 25;
+/** The booking charge is refunded when the customer cancels more than this many hours before the arrival window starts. */
+export const REFUND_HOURS = 24;
 
 export function by<T extends { id: string }>(list: T[], id: string): T | undefined {
   return list.find((x) => x.id === id);
@@ -125,6 +129,20 @@ export function quote(s: { service: ServiceId; type: TankType; size: SizeId; rec
   const bookTotal = round2(bookFee + bookTax);
   return { svc, base, discAmt, zone, travel, subtotal, tax, total, monthly, bookFee, bookTax, bookTotal, grand: round2(bookTotal + total) };
 }
+
+/** Start of the arrival window, as a timestamp. */
+export function visitStart(b: Pick<Booking, "date" | "win">) {
+  const d = parseIso(b.date);
+  d.setHours(by(WINDOWS, b.win)?.hour ?? 9, 0, 0, 0);
+  return d.getTime();
+}
+/** Would the booking charge be refunded if the customer cancelled at `now`? */
+export const refundable = (b: Booking, now = Date.now()) => visitStart(b) - now > REFUND_HOURS * 3600e3;
+/** Patch for a cancellation. When PetMe cancels or declines, the customer is always refunded. */
+export function cancelPatch(b: Booking, by: "customer" | "petme", now = Date.now()): Partial<Booking> {
+  return { status: "cancelled", cancelledAt: now, bookRefunded: by === "petme" || refundable(b, now) };
+}
+export const restorePatch: Partial<Booking> = { status: "new", cancelledAt: undefined, bookRefunded: undefined };
 
 /** Booking charge (tax in) already paid, and the full amount for the visit. */
 export const bookingPaid = (b: Booking) => b.bookTotal || 0;

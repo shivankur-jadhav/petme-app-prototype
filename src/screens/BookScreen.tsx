@@ -206,7 +206,7 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
           <Btn label={`Confirm and pay ${money(q.bookTotal)}`} icon="cal" onPress={submit} />
         </Animated.View>
         {err ? <Animated.Text entering={FadeIn} style={{ color: C.crit, fontFamily: F.body500, textAlign: "center", marginTop: -6 }}>{err}</Animated.Text> : null}
-        <Text style={[T.small, { textAlign: "center", marginTop: -6 }]}>You pay the {money(q.bookTotal)} booking charge now and the service charge after the visit.</Text>
+        <Text style={[T.small, { textAlign: "center", marginTop: -6 }]}>You pay the {money(q.bookTotal)} booking charge now and the service charge after the visit. Cancel more than 24 hours before the visit and the booking charge is refunded.</Text>
       </Screen>
     </KeyboardAvoidingView>
   );

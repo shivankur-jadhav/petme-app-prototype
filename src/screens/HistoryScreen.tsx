@@ -7,7 +7,7 @@ import { Icon } from "../components/Icon";
 import { Badge, Btn, Empty, Label, Ledger, Panel, Press, Screen, SecHeader, Title, enter, haptic, layout } from "../components/ui";
 import { MetricGrid, TabId } from "../components/visuals";
 import { byNewest, useStore } from "../store";
-import { Booking, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, fmtDate, fmtDur, grandTotal, metricsFor, money, tasksFor } from "../data";
+import { Booking, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, fmtDate, cancelPatch, fmtDur, grandTotal, metricsFor, money, refundable, tasksFor } from "../data";
 
 export const STATUS: Record<string, [string, string]> = { new: ["Requested", "tert"], confirmed: ["Confirmed", "cyan"], done: ["Completed", "ok"], cancelled: ["Cancelled", "slate"] };
 export const StatusBadge = ({ s }: { s: string }) => <Badge text={STATUS[s]?.[0] || s} tone={STATUS[s]?.[1] || "slate"} dot pulse={s === "new" || s === "confirmed"} />;
@@ -125,26 +125,44 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
           <Label>Billing</Label>
           {b.bookTotal ? (
             <>
-              <Ledger
-                rows={[["Booking charge", money(b.bookFee || 0)], ["HST 13%", money(b.bookTax || 0)]]}
-                totalLabel="Paid at booking"
-                totalSub="Charged when the visit was booked"
-                total={money(b.bookTotal)}
-              />
+              {b.status === "cancelled" ? (
+                <Ledger
+                  rows={[["Booking charge", money(b.bookFee || 0)], ["HST 13%", money(b.bookTax || 0)], ...(b.bookRefunded ? [["Refunded", money(-b.bookTotal), true] as [string, string, boolean]] : [])]}
+                  totalLabel={b.bookRefunded ? "Booking charge refunded" : "Booking charge kept"}
+                  totalSub={b.bookRefunded ? "Visit cancelled more than 24 hours ahead" : "Visit cancelled less than 24 hours ahead"}
+                  total={money(b.bookRefunded ? 0 : b.bookTotal)}
+                />
+              ) : (
+                <Ledger
+                  rows={[["Booking charge", money(b.bookFee || 0)], ["HST 13%", money(b.bookTax || 0)]]}
+                  totalLabel="Paid at booking"
+                  totalSub="Refunded if you cancel more than 24 hours before the visit"
+                  total={money(b.bookTotal)}
+                />
+              )}
               <View style={{ height: 6 }} />
             </>
           ) : null}
           <Ledger
             rows={[["Service", money(b.base)], ...(b.discAmt ? [["Plan discount", money(-b.discAmt), true] as [string, string, boolean]] : []), ...(b.travel ? [["Travel", money(b.travel)] as [string, string]] : []), ["HST 13%", money(b.tax)]]}
-            totalLabel={done ? "Paid after visit" : b.status === "cancelled" ? "Service charge, not charged" : "Due after visit"}
-            totalSub={[b.recur !== "once" ? `${by(RECUR, b.recur)?.name} plan` : "One visit", done && b.bookTotal ? `${money(grandTotal(b))} in total` : ""].filter(Boolean).join(" · ")}
-            total={money(b.total)}
+            totalLabel={done ? "Paid after visit" : b.status === "cancelled" ? "Service charge" : "Due after visit"}
+            totalSub={b.status === "cancelled" ? "Not charged, visit cancelled" : [b.recur !== "once" ? `${by(RECUR, b.recur)?.name} plan` : "One visit", done && b.bookTotal ? `${money(grandTotal(b))} in total` : ""].filter(Boolean).join(" · ")}
+            total={money(b.status === "cancelled" ? 0 : b.total)}
           />
         </Panel>
 
         {b.status === "new" || b.status === "confirmed" ? (
-          <Animated.View entering={FadeIn.delay(400)}>
-            <Btn label="Cancel this visit" kind="danger" onPress={() => { patchBooking(b.id, { status: "cancelled" }); haptic.soft(); toast("Visit cancelled."); }} />
+          <Animated.View entering={FadeIn.delay(400)} style={{ gap: 8 }}>
+            {b.bookTotal ? (
+              <Text style={[T.small, { textAlign: "center" }]}>
+                {refundable(b) ? `Cancel now and your ${money(b.bookTotal)} booking charge is refunded.` : `The visit is less than 24 hours away, so the ${money(b.bookTotal)} booking charge is not refunded.`}
+              </Text>
+            ) : null}
+            <Btn label="Cancel this visit" kind="danger" onPress={() => {
+              const p = cancelPatch(b, "customer");
+              patchBooking(b.id, p); haptic.soft();
+              toast(!b.bookTotal ? "Visit cancelled." : p.bookRefunded ? "Visit cancelled. Booking charge refunded." : "Visit cancelled. Booking charge kept.");
+            }} />
           </Animated.View>
         ) : null}
         {done ? <Btn label="Book the next visit" icon="cal" onPress={() => { onClose(); go("book"); }} /> : null}

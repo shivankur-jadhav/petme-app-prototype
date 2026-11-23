@@ -5,7 +5,7 @@ import { C, F, R, T } from "../theme";
 import { Badge, Btn, Chips, Empty, Field, Label, Panel, Screen, Title, enter, haptic, layout } from "../components/ui";
 import { TabId } from "../components/visuals";
 import { byNewest, useStore } from "../store";
-import { Booking, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, econ, fmtDate, grandTotal, metricsFor, money, money0, revenue } from "../data";
+import { Booking, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, cancelPatch, econ, fmtDate, grandTotal, restorePatch, metricsFor, money, money0, revenue } from "../data";
 import { StatusBadge, tankLine } from "./HistoryScreen";
 
 function CompleteForm({ b, onDone, onCancel }: { b: Booking; onDone: (r: Record<string, number>, notes: string) => void; onCancel: () => void }) {
@@ -41,7 +41,8 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
   const rows = [...bookings].sort(byNewest);
   const live = rows.filter((r) => r.status !== "cancelled");
   const open = rows.filter((r) => r.status === "new" || r.status === "confirmed").length;
-  const value = live.reduce((s, r) => s + grandTotal(r), 0);
+  // Booked value: live jobs in full, plus booking charges kept on late customer cancellations.
+  const value = live.reduce((s, r) => s + grandTotal(r), 0) + rows.reduce((s, r) => s + (r.status === "cancelled" && !r.bookRefunded ? r.bookTotal || 0 : 0), 0);
   const seen: Record<string, 1> = {};
   let mrr = 0;
   live.forEach((r) => { const k = r.name + r.tankName; if (r.monthly && !seen[k]) { seen[k] = 1; mrr += r.monthly; } });
@@ -93,12 +94,12 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
                 ) : (
                   <Animated.View layout={layout} style={{ gap: 10 }}>
                     <Text style={{ fontFamily: F.mono, fontSize: 12, color: C.muted }}>
-                      {b.bookTotal ? <>Booking <Text style={{ color: C.ink }}>{money(b.bookTotal)}</Text> paid · </> : null}{b.status === "done" ? "Service" : "Due after"} <Text style={{ color: C.ink }}>{money(b.total)}</Text>{e ? <> · Margin <Text style={{ color: C.ink }}>{money0(e.margin)} ({Math.round(e.pct * 100)}%)</Text></> : null}
+                      {b.bookTotal ? <>Booking <Text style={{ color: C.ink }}>{money(b.bookTotal)}</Text> {b.status === "cancelled" ? (b.bookRefunded ? "refunded" : "kept") : "paid"} · </> : null}{b.status === "done" ? "Service" : "Due after"} <Text style={{ color: C.ink }}>{money(b.total)}</Text>{e ? <> · Margin <Text style={{ color: C.ink }}>{money0(e.margin)} ({Math.round(e.pct * 100)}%)</Text></> : null}
                     </Text>
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                      {b.status === "new" ? <><Btn small label="Confirm" onPress={() => { patchBooking(b.id, { status: "confirmed" }); haptic.success(); }} /><Btn small kind="danger" label="Decline" onPress={() => patchBooking(b.id, { status: "cancelled" })} /></> : null}
-                      {b.status === "confirmed" ? <><Btn small label="Complete with report" onPress={() => setCompleting(b.id)} /><Btn small kind="danger" label="Cancel" onPress={() => patchBooking(b.id, { status: "cancelled" })} /></> : null}
-                      {b.status === "cancelled" ? <Btn small kind="sec" label="Restore" onPress={() => patchBooking(b.id, { status: "new" })} /> : null}
+                      {b.status === "new" ? <><Btn small label="Confirm" onPress={() => { patchBooking(b.id, { status: "confirmed" }); haptic.success(); }} /><Btn small kind="danger" label="Decline" onPress={() => patchBooking(b.id, cancelPatch(b, "petme"))} /></> : null}
+                      {b.status === "confirmed" ? <><Btn small label="Complete with report" onPress={() => setCompleting(b.id)} /><Btn small kind="danger" label="Cancel" onPress={() => patchBooking(b.id, cancelPatch(b, "petme"))} /></> : null}
+                      {b.status === "cancelled" ? <Btn small kind="sec" label="Restore" onPress={() => patchBooking(b.id, restorePatch)} /> : null}
                       {b.status === "done" ? <Btn small kind="sec" label="View report" onPress={() => openReport(b.id)} /> : null}
                       <Btn small kind="plain" label="Remove" onPress={() => removeBooking(b.id)} />
                     </View>
