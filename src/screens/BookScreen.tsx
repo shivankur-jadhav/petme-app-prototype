@@ -106,7 +106,8 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
           <SecHeader title="Select service" right={<Label>Priced for your tank</Label>} />
           {SERVICES.map((s) => {
             const on = s.id === service;
-            const price = quote({ service: s.id, type: tank.type, size: tank.size, recur: "once", city: "Toronto" }).base;
+            const sq = quote({ service: s.id, type: tank.type, size: tank.size, recur: "once", city });
+            const price = sq.base + sq.travel;
             return (
               <Press key={s.id} scaleTo={0.985} onPress={() => setService(s.id)} accessibilityRole="radio" accessibilityState={{ selected: on }}
                 style={{ gap: 10, padding: 14, borderRadius: R.lg, borderWidth: 1, borderColor: on ? C.primary : C.line, backgroundColor: on ? C.sel : C.glass }}>
@@ -142,7 +143,8 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
         <Panel index={3}>
           <SecHeader title="Service window" right={<Label color={date ? C.primary : C.muted}>{date ? fmtDate(date) : "Pick a day"}</Label>} />
           <Label>City</Label>
-          <Chips items={Object.keys(CITIES).map((c) => ({ id: c, label: c + (CITIES[c] === "A" ? "" : CITIES[c] === "B" ? " · +$25" : " · +$45") }))} value={city} onChange={pickCity} />
+          <Chips items={Object.keys(CITIES).map((c) => ({ id: c, label: c }))} value={city} onChange={pickCity} />
+          <Text style={[T.small, { marginTop: -4 }]}>Prices include travel to {city}.</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
             {days.map((d) => {
               const on = d.id === date;
@@ -228,9 +230,8 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
           <View style={{ height: 6 }} />
           <Ledger
             rows={[
-              [`Service: ${q.svc.name}`, money(q.base)],
+              [`Service: ${q.svc.name}`, money(q.base + q.travel)],
               ...(q.discAmt ? [["Plan discount", money(-q.discAmt), true] as [string, string, boolean]] : []),
-              ...(q.travel ? [[`Travel, zone ${q.zone}`, money(q.travel)] as [string, string]] : []),
               ["HST 13%", money(q.tax)],
             ]}
             totalLabel={q.monthly ? "Service, per visit" : "Due after visit"}

@@ -29,7 +29,7 @@ Source: `reference/stitch/DESIGN.md` and the four screen PNGs next to it. Tokens
 - Keep animations on the UI thread (Reanimated shared values), and keep loops cheap (the tank hero runs 3–4 fish + 3 bubbles).
 
 ## Data model
-`Booking` in `src/data.ts` is the core record: service, tank type/size, city/zone, date + window, contact, price breakdown, status (`new → confirmed → done`, or `cancelled`), and on completion `results` (water readings) + `techNotes`. Pricing is `quote()`; margins are `econ()`. All numbers are starter assumptions.
+`Booking` in `src/data.ts` is the core record: service, tank type/size, city + estimated km from the base, date + window, contact, price breakdown, status (`new → confirmed → done`, or `cancelled`), and on completion `results` (water readings) + `techNotes`. Pricing is `quote()`; margins are `econ()`. Travel is charged by distance from the base at Bramalea City Centre (`BASE`, `roadKm()`, `travelFee()` in `data.ts`) and is folded into the service price, never shown as its own line. All numbers are starter assumptions.
 
 ## Known gaps / roadmap
 1. Shared backend (Supabase suggested: Postgres + auth + realtime) so customers and technicians see the same bookings; split technician screens behind a role.

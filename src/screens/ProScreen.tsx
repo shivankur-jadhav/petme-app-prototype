@@ -5,7 +5,7 @@ import { C, F, R, T } from "../theme";
 import { Badge, Btn, Chips, Empty, Field, Label, Panel, Screen, Title, enter, haptic, layout } from "../components/ui";
 import { TabId } from "../components/visuals";
 import { byNewest, useStore } from "../store";
-import { Booking, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, cancelPatch, econ, fmtDate, grandTotal, restorePatch, metricsFor, money, money0, revenue } from "../data";
+import { Booking, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, cancelPatch, econ, BASE, TRAVEL_COST_PER_KM, fmtDate, grandTotal, restorePatch, metricsFor, money, money0, revenue } from "../data";
 import { StatusBadge, tankLine } from "./HistoryScreen";
 
 function CompleteForm({ b, onDone, onCancel }: { b: Booking; onDone: (r: Record<string, number>, notes: string) => void; onCancel: () => void }) {
@@ -80,7 +80,7 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
                   <StatusBadge s={b.status} />
                 </View>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", rowGap: 8 }}>
-                  {[["When", `${fmtDate(b.date)}, ${by(WINDOWS, b.win)?.start}`], ["Customer", b.name], ["Phone", b.phone], ["Location", `${b.address ? b.address + ", " : ""}${b.city} (zone ${b.zone})`], ["Tank", tankLine(b)], ["Plan", b.recur !== "once" ? by(RECUR, b.recur)!.name : "One visit"]].map(([k, v]) => (
+                  {[["When", `${fmtDate(b.date)}, ${by(WINDOWS, b.win)?.start}`], ["Customer", b.name], ["Phone", b.phone], ["Location", `${b.address ? b.address + ", " : ""}${b.city}${b.km != null ? ` (${b.km} km from base)` : ""}`], ["Tank", tankLine(b)], ["Plan", b.recur !== "once" ? by(RECUR, b.recur)!.name : "One visit"]].map(([k, v]) => (
                     <View key={k} style={{ width: "50%", paddingRight: 8 }}><Label>{k}</Label><Text style={T.body}>{v}</Text></View>
                   ))}
                 </View>
@@ -109,7 +109,7 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
             );
           }) : <Empty title="Nothing here" text="No jobs with that status." />}
           <Btn kind="sec" small label={hasEx ? "Remove example jobs" : "Add example jobs"} onPress={() => { if (hasEx) { clearExamples(); toast("Removed example jobs."); } else { loadExamples(); toast("Added 4 example jobs."); } }} />
-          <Text style={T.small}>Margin assumes labour at ${LABOUR} per hour, travel cost by zone ($12, $18, $24) and supplies at {Math.round(SUPPLY * 100)}% of the pre-tax service price. Revenue includes the booking charge. Swap in your real costs after the first jobs.</Text>
+          <Text style={T.small}>Margin assumes labour at ${LABOUR} per hour, driving at ${TRAVEL_COST_PER_KM.toFixed(2)} per km both ways from {BASE.name} and supplies at {Math.round(SUPPLY * 100)}% of the pre-tax service price. Revenue includes the booking charge. Swap in your real costs after the first jobs.</Text>
         </>
       )}
     </Screen>

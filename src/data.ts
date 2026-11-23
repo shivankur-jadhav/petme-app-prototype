@@ -30,7 +30,8 @@ export type Booking = {
   size: SizeId;
   tankName: string;
   city: string;
-  zone: string;
+  zone?: string; // only on bookings saved before distance pricing
+  km?: number; // estimated one-way km from the base
   recur: RecurId;
   date: string; // YYYY-MM-DD
   win: string;
@@ -42,7 +43,7 @@ export type Booking = {
   wishlist: string[];
   base: number;
   discAmt: number;
-  travel: number;
+  travel: number; // travel charge, shown inside the service price
   subtotal: number; // service charge before tax
   tax: number;
   total: number; // service charge, paid after the visit
@@ -105,13 +106,33 @@ export const WINDOWS = [
   { id: "pm", icon: "moon", name: "3:00 PM – 6:00 PM", start: "3:00 PM", hour: 15, sub: "Late afternoon window" },
 ];
 
-export const CITIES: Record<string, "A" | "B" | "C"> = {
-  Toronto: "A", Mississauga: "A", Vaughan: "A", Markham: "A", "Richmond Hill": "A",
-  Brampton: "B", Oakville: "B", Burlington: "B", Milton: "B", Pickering: "B", Ajax: "B", Whitby: "B", Aurora: "B", Newmarket: "B",
-  Oshawa: "C", "Whitchurch-Stouffville": "C", King: "C", "Halton Hills": "C",
+/* ---------- travel: charged by distance from the PetMe base ---------- */
+// Technicians start from Bramalea City Centre in Brampton. Each city is priced from its centre,
+// so the distance is an estimate until we geocode real addresses.
+export const BASE = { name: "Bramalea City Centre", lat: 43.7166, lng: -79.7234 };
+/** City centres [lat, lng]. Order is the order shown in the city picker. */
+export const CITIES: Record<string, [number, number]> = {
+  Brampton: [43.6831, -79.7663], Mississauga: [43.589, -79.6441], Toronto: [43.6532, -79.3832], Vaughan: [43.8361, -79.4983],
+  "Halton Hills": [43.647, -79.903], Milton: [43.5183, -79.8774], Oakville: [43.4675, -79.6877], King: [43.926, -79.528],
+  "Richmond Hill": [43.8828, -79.4403], Markham: [43.8561, -79.337], Burlington: [43.3255, -79.799], Aurora: [44.0065, -79.4504],
+  Newmarket: [44.0592, -79.4613], "Whitchurch-Stouffville": [43.971, -79.245], Pickering: [43.8384, -79.0868], Ajax: [43.8509, -79.0204],
+  Whitby: [43.8975, -78.9429], Oshawa: [43.8971, -78.8658],
 };
-export const ZONE_FEE = { A: 0, B: 25, C: 45 };
-export const ZONE_COST = { A: 12, B: 18, C: 24 };
+export const ROAD_FACTOR = 1.3; // straight-line distance x 1.3 ~ driving distance in the GTA
+export const TRAVEL_FREE_KM = 10; // no travel charge within this many km of the base
+export const TRAVEL_PER_KM = 1; // $ per km beyond the free distance (one way), before HST
+export const TRAVEL_COST_PER_KM = 0.3; // our driving cost per km, counted both ways, for margins
+/** Estimated one-way driving distance from the base to a city, in whole km. */
+export function roadKm(city: string) {
+  const c = CITIES[city];
+  if (!c) return 0;
+  const rad = Math.PI / 180, dLat = (c[0] - BASE.lat) * rad, dLng = (c[1] - BASE.lng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(BASE.lat * rad) * Math.cos(c[0] * rad) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * 6371 * Math.asin(Math.sqrt(h)) * ROAD_FACTOR);
+}
+export const travelFee = (km: number) => Math.round(Math.max(0, km - TRAVEL_FREE_KM) * TRAVEL_PER_KM);
+/** Travel cost for bookings saved before distance pricing, which only stored a zone. */
+const LEGACY_ZONE_COST: Record<string, number> = { A: 12, B: 18, C: 24 };
 export const HST = 0.13;
 export const LABOUR = 32;
 export const SUPPLY = 0.1;
@@ -133,8 +154,8 @@ export function quote(s: { service: ServiceId; type: TankType; size: SizeId; rec
   base = Math.round(base / 5) * 5;
   const rec = svc.id === "clean" ? by(RECUR, s.recur) : undefined;
   const discAmt = rec ? Math.round(base * rec.disc) : 0;
-  const zone = CITIES[s.city] || "A";
-  const travel = ZONE_FEE[zone];
+  const km = roadKm(s.city);
+  const travel = travelFee(km);
   const subtotal = base - discAmt + travel;
   const tax = round2(subtotal * HST);
   const total = round2(subtotal + tax);
@@ -142,7 +163,7 @@ export function quote(s: { service: ServiceId; type: TankType; size: SizeId; rec
   const bookFee = BOOKING_FEE;
   const bookTax = 0; // the booking charge has no HST; HST applies to the service charge only
   const bookTotal = round2(bookFee + bookTax);
-  return { svc, base, discAmt, zone, travel, subtotal, tax, total, monthly, bookFee, bookTax, bookTotal, grand: round2(bookTotal + total) };
+  return { svc, base, discAmt, km, travel, subtotal, tax, total, monthly, bookFee, bookTax, bookTotal, grand: round2(bookTotal + total) };
 }
 
 /** Start of the arrival window, as a timestamp. */
@@ -176,7 +197,7 @@ export function econ(b: Booking) {
   if (!svc || !b.subtotal) return null;
   const hours = svc.hours[b.size] || 1;
   const rev = revenue(b);
-  const margin = rev - hours * LABOUR - (ZONE_COST[b.zone] || 12) - b.subtotal * SUPPLY;
+  const margin = rev - hours * LABOUR - (b.km != null ? 2 * b.km * TRAVEL_COST_PER_KM : LEGACY_ZONE_COST[b.zone || "A"] || 12) - b.subtotal * SUPPLY;
   return { margin, pct: margin / rev };
 }
 
@@ -292,7 +313,7 @@ export function makeBooking(
   const q = quote(s);
   return {
     id: newId(), ref: newRef(),
-    service: s.service, type: s.type, size: s.size, tankName: s.tankName || "", city: s.city, zone: q.zone,
+    service: s.service, type: s.type, size: s.size, tankName: s.tankName || "", city: s.city, km: q.km,
     recur: s.service === "clean" ? s.recur : "once", date: s.date, win: s.win,
     name: contact.name, phone: contact.phone, address: contact.address || "", notes: contact.notes || "", sms: !!contact.sms, wishlist: contact.wishlist || [],
     base: q.base, discAmt: q.discAmt, travel: q.travel, subtotal: q.subtotal, tax: q.tax, total: q.total, monthly: q.monthly,

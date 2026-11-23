@@ -84,7 +84,7 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
             ))}
           </View>
           <View style={s.kv}>
-            <View style={s.kvCell}><Label>Location</Label><Text style={T.body}>{b.city} (zone {b.zone})</Text></View>
+            <View style={s.kvCell}><Label>Location</Label><Text style={T.body}>{b.city}</Text></View>
             <View style={s.kvCell}><Label>Contact</Label><Text style={T.body}>{b.name}, {b.phone}</Text></View>
           </View>
         </Panel>
@@ -146,7 +146,7 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
             </>
           ) : null}
           <Ledger
-            rows={[["Service", money(b.base)], ...(b.discAmt ? [["Plan discount", money(-b.discAmt), true] as [string, string, boolean]] : []), ...(b.travel ? [["Travel", money(b.travel)] as [string, string]] : []), ["HST 13%", money(b.tax)]]}
+            rows={[["Service", money(b.base + (b.travel || 0))], ...(b.discAmt ? [["Plan discount", money(-b.discAmt), true] as [string, string, boolean]] : []), ["HST 13%", money(b.tax)]]}
             totalLabel={done ? "Paid after visit" : b.status === "cancelled" ? "Service charge" : "Due after visit"}
             totalSub={b.status === "cancelled" ? "Not charged, visit cancelled" : [b.recur !== "once" ? `${by(RECUR, b.recur)?.name} plan` : "One visit", done && b.bookTotal ? `${money(grandTotal(b))} in total` : ""].filter(Boolean).join(" · ")}
             total={money(b.status === "cancelled" ? 0 : b.total)}
