@@ -118,7 +118,7 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
           <Animated.View entering={FadeInDown.springify().damping(18)} exiting={FadeOut.duration(150)} layout={layout}>
             <Panel>
               <SecHeader title="Maintenance plan" right={<Label color={C.primary}>Saves on every visit</Label>} />
-              <Segmented items={RECUR.map((r) => ({ id: r.id, label: r.name, sub: r.sub }))} value={recur} onChange={setRecur} />
+              <Segmented<RecurId> items={RECUR.map((r) => ({ id: r.id, label: r.name, sub: r.sub }))} value={recur} onChange={setRecur} />
             </Panel>
           </Animated.View>
         ) : null}

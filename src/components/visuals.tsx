@@ -1,6 +1,8 @@
 // Animated visuals: the living tank hero, metric pods with range gauges, the bottom tab bar and the bottom sheet.
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
+
+type Transform = NonNullable<ViewStyle["transform"]>;
 import Animated, {
   Easing, FadeIn, FadeOut, SlideInDown, SlideOutDown, interpolate, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming,
 } from "react-native-reanimated";
@@ -28,7 +30,7 @@ function SwimFish({ width, top, color, size, duration, delay }: { width: number;
         { translateX: 12 + eased * range },
         { translateY: Math.sin(p.value * Math.PI * 3) * 4 },
         { scaleX: p.value < 1 ? -1 : 1 },
-      ],
+      ] as Transform,
     };
   });
   return (
@@ -48,7 +50,7 @@ function Bubble({ x, delay, height }: { x: number; delay: number; height: number
   }, []);
   const a = useAnimatedStyle(() => ({
     opacity: interpolate(p.value, [0, 0.15, 0.85, 1], [0, 0.7, 0.5, 0]),
-    transform: [{ translateY: -p.value * (height - 30) }, { translateX: Math.sin(p.value * 10) * 3 }],
+    transform: [{ translateY: -p.value * (height - 30) }, { translateX: Math.sin(p.value * 10) * 3 }] as Transform,
   }));
   return <Animated.View style={[{ position: "absolute", left: x, bottom: 22, width: 5, height: 5, borderRadius: 3, borderWidth: 1, borderColor: "#bae6fd" }, a]} />;
 }
@@ -169,7 +171,7 @@ export const TABS: { id: TabId; label: string; icon: string }[] = [
 function TabItem({ tab, active, onPress, badge }: { tab: (typeof TABS)[number]; active: boolean; onPress: () => void; badge?: number }) {
   const s = useSharedValue(active ? 1 : 0);
   useEffect(() => { s.value = withSpring(active ? 1 : 0, SPRING); }, [active]);
-  const icon = useAnimatedStyle(() => ({ transform: [{ scale: 1 + s.value * 0.12 }, { translateY: -s.value * 2 }] }));
+  const icon = useAnimatedStyle(() => ({ transform: [{ scale: 1 + s.value * 0.12 }, { translateY: -s.value * 2 }] as Transform }));
   return (
     <Pressable onPress={onPress} style={ts.item} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={tab.label}>
       <Animated.View style={icon}>
