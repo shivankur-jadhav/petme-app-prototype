@@ -33,6 +33,7 @@ export const DARK = {
   tabBg: "rgba(6,20,38,0.82)", // tab bar over the blur
   scrim: "rgba(0,0,0,0.6)", // behind bottom sheets
   shadow: "#000",
+  logo: "#FFFFFF", // orca logo tint
   ok: "#10B981",
   okTint: "rgba(16,185,129,0.12)",
   warn: "#F59E0B",
@@ -74,6 +75,7 @@ export const LIGHT: Palette = {
   tabBg: "rgba(255,255,255,0.86)",
   scrim: "rgba(11,27,46,0.35)",
   shadow: "#0B1B2E",
+  logo: "#000000",
   ok: "#059669",
   okTint: "rgba(5,150,105,0.12)",
   warn: "#B45309",

@@ -245,7 +245,7 @@ export function AppBar() {
   return (
     <View style={st.appbar}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={st.mark}><Image source={LOGO} style={{ width: 26, height: 26, tintColor: C.primary }} resizeMode="contain" accessibilityLabel="PetMe" /></View>
+        <View style={st.mark}><Image source={LOGO} style={{ width: 26, height: 26, tintColor: C.logo }} resizeMode="contain" accessibilityLabel="PetMe" /></View>
         <View>
           <Text style={st.brand}>PetMe</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
