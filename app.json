@@ -4,10 +4,12 @@
     "slug": "petme",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "backgroundColor": "#061426",
     "newArchEnabled": true,
     "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#061426"
     },
     "ios": {
@@ -16,11 +18,19 @@
     },
     "android": {
       "package": "com.petme.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#061426"
+      }
     },
     "plugins": [
       "expo-status-bar",
       "expo-font"
-    ]
+    ],
+    "icon": "./assets/icon.png",
+    "web": {
+      "favicon": "./assets/icon.png"
+    }
   }
 }

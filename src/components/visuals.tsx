@@ -10,7 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import Svg, { Circle, Defs, Ellipse, LinearGradient as SvgGrad, Path, Stop } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, F, R, SPRING, T } from "../theme";
+import { C, F, R, SPRING, T, isDark, themed } from "../theme";
 import { Icon } from "./Icon";
 import { Badge, haptic } from "./ui";
 import { Metric, TankType, chemOf, judge } from "../data";
@@ -103,10 +103,10 @@ export function TankHero({ type, children }: { type: TankType; children?: React.
     </View>
   );
 }
-const hs = StyleSheet.create({
+const hs = themed(() => StyleSheet.create({
   wrap: { height: 168, overflow: "hidden", borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg },
   tags: { position: "absolute", top: 12, left: 12, right: 12, flexDirection: "row", justifyContent: "space-between" },
-});
+}));
 
 /* ---------------- Metric pod with animated gauge ---------------- */
 export function MetricPod({ m, value, type, index = 0 }: { m: Metric; value: number; type: TankType; index?: number }) {
@@ -138,7 +138,7 @@ export function MetricPod({ m, value, type, index = 0 }: { m: Metric; value: num
     </View>
   );
 }
-const ms = StyleSheet.create({
+const ms = themed(() => StyleSheet.create({
   pod: { flexBasis: "47%", flexGrow: 1, backgroundColor: C.s, borderColor: C.hair, borderWidth: 1, borderRadius: R.lg, padding: 12, gap: 8 },
   top: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 6, flexWrap: "wrap" },
   val: { fontFamily: F.head700, fontSize: 27, letterSpacing: -0.5 },
@@ -147,7 +147,7 @@ const ms = StyleSheet.create({
   okZone: { position: "absolute", height: 4, borderRadius: 2, backgroundColor: "rgba(16,185,129,0.35)" },
   dot: { width: 8, height: 8, borderRadius: 4, position: "absolute", left: 0 },
   tgt: { fontFamily: F.mono, fontSize: 11, color: C.muted },
-});
+}));
 
 export function MetricGrid({ readings, type, metrics }: { readings: Record<string, number>; type: TankType; metrics: Metric[] }) {
   const shown = metrics.filter((m) => readings[m.id] != null && !isNaN(readings[m.id]));
@@ -193,8 +193,8 @@ export function TabBar({ value, onChange, badges }: { value: TabId; onChange: (t
   const ind = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
     <View style={[ts.bar, { paddingBottom: Math.max(ins.bottom, 8) }]}>
-      <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(6,20,38,0.82)" }]} />
+      <BlurView intensity={40} tint={isDark() ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.tabBg }]} />
       <View style={ts.row} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
         {itemW ? <Animated.View style={[ts.ind, ind]} /> : null}
         {TABS.map((t) => (
@@ -204,7 +204,7 @@ export function TabBar({ value, onChange, badges }: { value: TabId; onChange: (t
     </View>
   );
 }
-const ts = StyleSheet.create({
+const ts = themed(() => StyleSheet.create({
   bar: { position: "absolute", left: 0, right: 0, bottom: 0, borderTopWidth: 1, borderTopColor: C.line, overflow: "hidden" },
   row: { flexDirection: "row", paddingTop: 8, paddingHorizontal: 6 },
   item: { flex: 1, alignItems: "center", gap: 3, paddingVertical: 4 },
@@ -212,7 +212,7 @@ const ts = StyleSheet.create({
   ind: { position: "absolute", top: 0, left: 6, width: 32, height: 3, borderRadius: 2, backgroundColor: C.primary, shadowColor: C.primary, shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } },
   badge: { position: "absolute", right: -8, top: -4, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: C.tertiary, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
   badgeText: { fontFamily: F.body600, fontSize: 10, color: C.onPrimary },
-});
+}));
 
 /* ---------------- Bottom sheet ---------------- */
 export function Sheet({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
@@ -221,7 +221,7 @@ export function Sheet({ open, onClose, children }: { open: boolean; onClose: () 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={open ? "auto" : "box-none"}>
       {open ? (
-        <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.6)" }]}>
+        <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={[StyleSheet.absoluteFill, { backgroundColor: C.scrim }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
         </Animated.View>
       ) : null}
@@ -234,8 +234,8 @@ export function Sheet({ open, onClose, children }: { open: boolean; onClose: () 
     </View>
   );
 }
-const sh = StyleSheet.create({
+const sh = themed(() => StyleSheet.create({
   panel: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: C.s, borderTopLeftRadius: R.xl + 6, borderTopRightRadius: R.xl + 6, borderWidth: 1, borderColor: C.primary, padding: 20, gap: 14,
-    shadowColor: "#000", shadowOpacity: 0.6, shadowRadius: 48, shadowOffset: { width: 0, height: -10 }, elevation: 20 },
+    shadowColor: C.shadow, shadowOpacity: isDark() ? 0.6 : 0.18, shadowRadius: 48, shadowOffset: { width: 0, height: -10 }, elevation: 20 },
   handle: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: C.line2, marginBottom: 4 },
-});
+}));

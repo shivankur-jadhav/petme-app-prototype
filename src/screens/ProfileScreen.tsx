@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, SlideInRight, SlideOutRight, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, F, R, T } from "../theme";
+import { C, F, R, T, ThemePref, themed } from "../theme";
 import { Icon } from "../components/Icon";
-import { Badge, Btn, Check, Chips, Field, Label, Panel, Press, SecHeader, enter, haptic } from "../components/ui";
+import { Badge, Btn, Check, Chips, Field, Label, Panel, Press, SecHeader, Segmented, enter, haptic } from "../components/ui";
 import { TabId } from "../components/visuals";
 import { useStore } from "../store";
 import { CITIES, Profile, SIZES, TYPES, by, initials, money0, paidSoFar, phoneOk, validEmail, validPostal } from "../data";
@@ -14,7 +14,7 @@ const COL = { flexGrow: 0, flexShrink: 0, flexBasis: "auto" } as const;
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default function ProfileScreen({ onClose, go }: { onClose: () => void; go: (t: TabId) => void }) {
-  const { profile, setProfile, bookings, tank, toast } = useStore();
+  const { profile, setProfile, bookings, tank, toast, themePref, setThemePref } = useStore();
   const ins = useSafeAreaInsets();
   const [d, setD] = useState<Profile>(profile);
   const [err, setErr] = useState("");
@@ -106,6 +106,11 @@ export default function ProfileScreen({ onClose, go }: { onClose: () => void; go
           </Panel>
 
           <Panel index={5}>
+            <SecHeader title="Appearance" icon="sun" right={<Label>Saved right away</Label>} />
+            <Segmented<ThemePref> items={[{ id: "system", label: "System", sub: "Match phone" }, { id: "light", label: "Light" }, { id: "dark", label: "Dark" }]} value={themePref} onChange={setThemePref} />
+          </Panel>
+
+          <Panel index={6}>
             <SecHeader title="Your tank" icon="tank" right={tank.sample ? <Badge text="Sample profile" tone="slate" dashed /> : null} />
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
               <View style={{ flex: 1 }}>
@@ -127,7 +132,7 @@ export default function ProfileScreen({ onClose, go }: { onClose: () => void; go
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   avatar: { width: 64, height: 64, borderRadius: R.lg, backgroundColor: C.sTop, borderWidth: 1, borderColor: C.primary, alignItems: "center", justifyContent: "center" },
   stat: { flex: 1, backgroundColor: C.s, borderWidth: 1, borderColor: C.hair, borderRadius: R.lg, padding: 12 },
-});
+}));

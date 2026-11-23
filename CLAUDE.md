@@ -14,8 +14,10 @@ Expo (managed, latest SDK, must keep working in Expo Go — no custom native mod
 
 ## Design system (follow it)
 Source: `reference/stitch/DESIGN.md` and the four screen PNGs next to it. Tokens live in `src/theme.ts`; use them, never raw hex in screens.
-- Dark only. Abyss background `#061426`, glass panels (`C.glass` + 1px `C.line` border, 8px radius), electric cyan `C.primary` for active state and primary buttons, `C.tertiary` blue for secondary data.
-- Status colours: ok `#10B981`, warn `#F59E0B`, crit `#F43F5E`. Status always shows as a badge with a dot (pulsing when it needs attention).
+- Light and dark themes, chosen in Profile → Appearance (System / Light / Dark, System is the default). Dark is the Stitch original: abyss background `#061426`, glass panels (`C.glass` + 1px `C.line` border, 8px radius), electric cyan `C.primary` for active state and primary buttons, `C.tertiary` blue for secondary data. Light (`LIGHT` in `theme.ts`) uses the same token names with a lagoon-white canvas, white glass panels and a deeper cyan for contrast.
+- Theming rules: `C` and `T` always hold the active palette (`applyTheme` in `theme.ts`, called from `App.tsx`). Read colours from `C` at render time; module-level styles must use `themed(() => StyleSheet.create({...}))` so they rebuild after a switch. Never capture a colour in a module-level constant. The tank hero is underwater art and stays dark in both themes.
+- Logo: the orca in `assets/logo.png` is a white mask; show it with `tintColor` (header uses `C.primary`). App icon, Android adaptive icon and splash are generated from the same artwork.
+- Status colours (dark / light): ok `#10B981` / `#059669`, warn `#F59E0B` / `#B45309`, crit `#F43F5E` / `#E11D48`. Status always shows as a badge with a dot (pulsing when it needs attention).
 - Type: Space Grotesk for headings and big numbers, Inter for body (Geist in the Stitch file; swap via `@expo-google-fonts/geist` if wanted), monospace for references and money ledgers. Uppercase 10px labels with letter spacing.
 - Copy: plain, short, user-side wording. No "telemetry" jargon in UI text.
 
@@ -35,7 +37,7 @@ Source: `reference/stitch/DESIGN.md` and the four screen PNGs next to it. Tokens
 3. Payments after the visit (Stripe), plan billing.
 4. Push notifications: booking confirmed, tech 15 minutes away, report ready.
 5. Real livestock records per tank, editable by the technician.
-6. App icon and splash art.
+6. Splash screen in light mode (the splash is always abyss blue; it shows before the theme is known).
 
 ## Checking work
 Run `npm run typecheck`, then open in Expo Go on a real phone: every tab, booking flow (including the validation shake), example jobs in Pro, completing a job with readings, and the report it produces.

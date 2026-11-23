@@ -1,15 +1,17 @@
 // Shared building blocks. Every press springs and gives a light haptic so the app feels physical.
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleProp, StyleSheet, Text, TextInput, TextInputProps, View, ViewStyle } from "react-native";
+import { Image, Pressable, StyleProp, StyleSheet, Text, TextInput, TextInputProps, View, ViewStyle } from "react-native";
 import Animated, {
   FadeInDown, FadeOutDown, LinearTransition, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming, ZoomIn,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, F, R, SPRING, T } from "../theme";
+import { C, F, R, SPRING, T, isDark, themed } from "../theme";
 import { Icon } from "./Icon";
 import { useStore } from "../store";
 import { initials } from "../data";
+
+export const LOGO = require("../../assets/logo.png");
 
 export const haptic = {
   tap: () => { Haptics.selectionAsync().catch(() => {}); },
@@ -104,7 +106,7 @@ export function Btn({
 }: { label: string; onPress?: () => void; kind?: "primary" | "sec" | "ghost" | "danger" | "plain"; icon?: string; small?: boolean; block?: boolean; disabled?: boolean }) {
   const k = {
     primary: { bg: C.primary, fg: C.onPrimary, bd: C.primary },
-    sec: { bg: "transparent", fg: C.primary, bd: "rgba(0,210,211,0.4)" },
+    sec: { bg: "transparent", fg: C.primary, bd: C.primaryGlow },
     ghost: { bg: C.sHigh, fg: C.primary, bd: "transparent" },
     danger: { bg: "rgba(244,63,94,0.08)", fg: C.crit, bd: "rgba(244,63,94,0.5)" },
     plain: { bg: "transparent", fg: C.muted, bd: "transparent" },
@@ -243,7 +245,7 @@ export function AppBar() {
   return (
     <View style={st.appbar}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={st.mark}><Icon name="fish" color={C.primary} /></View>
+        <View style={st.mark}><Image source={LOGO} style={{ width: 26, height: 26, tintColor: C.primary }} resizeMode="contain" accessibilityLabel="PetMe" /></View>
         <View>
           <Text style={st.brand}>PetMe</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
@@ -302,7 +304,7 @@ export function Toast() {
   );
 }
 
-export const st = StyleSheet.create({
+export const st = themed(() => StyleSheet.create({
   panel: { backgroundColor: C.glass, borderColor: C.line, borderWidth: 1, borderRadius: R.lg, padding: 16, gap: 12 },
   flat: { backgroundColor: C.sLow },
   secH: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" },
@@ -313,7 +315,7 @@ export const st = StyleSheet.create({
   btnText: { fontFamily: F.body600, fontSize: 15 },
   glow: { shadowColor: C.primary, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   seg: { flexDirection: "row", backgroundColor: C.bg, borderColor: C.line2, borderWidth: 1, borderRadius: R.md, padding: 3 },
-  segPill: { position: "absolute", top: 3, bottom: 3, left: 3, borderRadius: R.sm, backgroundColor: C.glass2, borderWidth: 1, borderColor: "rgba(0,210,211,0.45)" },
+  segPill: { position: "absolute", top: 3, bottom: 3, left: 3, borderRadius: R.sm, backgroundColor: C.glass2, borderWidth: 1, borderColor: C.primaryGlow },
   segItem: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 9, paddingHorizontal: 2 },
   segText: { fontFamily: F.body500, fontSize: 13, color: C.ink2 },
   segSub: { fontFamily: F.body, fontSize: 10, color: C.muted, marginTop: 1 },
@@ -334,5 +336,5 @@ export const st = StyleSheet.create({
   avatar: { width: 38, height: 38, borderRadius: 8, backgroundColor: C.sTop, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
   avatarDot: { position: "absolute", right: -3, bottom: -3, width: 10, height: 10, borderRadius: 5, backgroundColor: C.tertiary, borderWidth: 2, borderColor: C.bg },
   toast: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.sTop, borderColor: C.primary, borderWidth: 1, borderRadius: R.md, paddingHorizontal: 14, paddingVertical: 10, maxWidth: 360, marginHorizontal: 16,
-    shadowColor: "#000", shadowOpacity: 0.6, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 10 },
-});
+    shadowColor: C.shadow, shadowOpacity: isDark() ? 0.6 : 0.16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 10 },
+}));

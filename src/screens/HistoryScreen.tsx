@@ -2,7 +2,7 @@ import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, SlideInRight, SlideOutRight, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, F, R, T } from "../theme";
+import { C, F, R, T, themed } from "../theme";
 import { Icon } from "../components/Icon";
 import { Badge, Btn, Empty, Label, Ledger, Panel, Press, Screen, SecHeader, Title, enter, haptic, layout } from "../components/ui";
 import { MetricGrid, TabId } from "../components/visuals";
@@ -171,11 +171,11 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   card: { gap: 12, padding: 14, borderRadius: R.lg, borderWidth: 1, borderColor: C.line, backgroundColor: C.glass },
   kv: { flexDirection: "row", flexWrap: "wrap", rowGap: 10 },
   kvCell: { width: "50%", paddingRight: 8, gap: 2 },
   tiles: { flexDirection: "row", borderWidth: 1, borderColor: C.hair, borderRadius: R.md, overflow: "hidden" },
   tile: { flex: 1, padding: 10, gap: 3 },
   tick: { width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, borderColor: C.line2, alignItems: "center", justifyContent: "center" },
-});
+}));

@@ -102,14 +102,14 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
             const price = quote({ service: s.id, type: tank.type, size: tank.size, recur: "once", city: "Toronto" }).base;
             return (
               <Press key={s.id} scaleTo={0.985} onPress={() => setService(s.id)} accessibilityRole="radio" accessibilityState={{ selected: on }}
-                style={{ gap: 10, padding: 14, borderRadius: R.lg, borderWidth: 1, borderColor: on ? C.primary : C.line, backgroundColor: on ? "rgba(30,62,98,0.45)" : C.glass }}>
+                style={{ gap: 10, padding: 14, borderRadius: R.lg, borderWidth: 1, borderColor: on ? C.primary : C.line, backgroundColor: on ? C.sel : C.glass }}>
                 <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
                   <View style={{ marginTop: 2 }}><Icon name={s.icon} color={C.tertiary} /></View>
                   <View style={{ flex: 1 }}>
                     <Text style={T.h3}>{s.name}</Text>
                     <Text style={T.small}>{s.tag}</Text>
                   </View>
-                  <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: on ? C.tertiary : "#3b4949", backgroundColor: on ? C.tertiary : C.sTop, alignItems: "center", justifyContent: "center" }}>
+                  <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: on ? C.tertiary : C.radioOff, backgroundColor: on ? C.tertiary : C.sTop, alignItems: "center", justifyContent: "center" }}>
                     {on ? <Animated.View entering={ZoomIn.springify().damping(12)}><Icon name="check" size={13} color={C.onPrimary} width={3} /></Animated.View> : null}
                   </View>
                 </View>
@@ -153,10 +153,10 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
             const on = w.id === win;
             return (
               <Press key={w.id} scaleTo={0.985} onPress={() => setWin(w.id)} accessibilityRole="radio" accessibilityState={{ selected: on }}
-                style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: R.lg, borderWidth: 1, borderColor: on ? C.primary : C.line2, backgroundColor: on ? "rgba(30,62,98,0.4)" : C.sLow }}>
+                style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: R.lg, borderWidth: 1, borderColor: on ? C.primary : C.line2, backgroundColor: on ? C.sel : C.sLow }}>
                 <Icon name={w.icon} color={C.tertiary} />
                 <View style={{ flex: 1 }}><Text style={T.h3}>{w.name}</Text><Text style={T.small}>{w.sub}</Text></View>
-                <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: on ? C.tertiary : "#3b4949", backgroundColor: on ? C.tertiary : C.sTop }} />
+                <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: on ? C.tertiary : C.radioOff, backgroundColor: on ? C.tertiary : C.sTop }} />
               </Press>
             );
           })}

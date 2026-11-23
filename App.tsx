@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { BackHandler, StyleSheet, View } from "react-native";
+import { BackHandler, StyleSheet, View, useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useFonts, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
-import { C } from "./src/theme";
+import { C, applyTheme } from "./src/theme";
 import { StoreProvider, useStore } from "./src/store";
 import { TabBar, TabId, Sheet } from "./src/components/visuals";
 import { Toast } from "./src/components/ui";
@@ -17,7 +17,12 @@ import ProScreen from "./src/screens/ProScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 
 function Shell() {
-  const { ready, bookings, wish, profileOpen, setProfileOpen } = useStore();
+  const { ready, bookings, wish, profileOpen, setProfileOpen, themePref } = useStore();
+  // Resolve the light/dark choice and apply it before anything below renders, so every screen
+  // reads the right palette from `C` on this render.
+  const scheme = useColorScheme();
+  const mode = themePref === "system" ? (scheme === "light" ? "light" : "dark") : themePref;
+  applyTheme(mode);
   const [tab, setTab] = useState<TabId>("tanks");
   const [reportId, setReportId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<React.ReactNode>(null);
@@ -44,6 +49,7 @@ function Shell() {
   const props = { go, openReport };
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <StatusBar style={mode === "light" ? "dark" : "light"} />
       {/* Each tab re-mounts with a soft fade so its cards can stagger in again. */}
       <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
         {tab === "tanks" && <TanksScreen {...props} />}
@@ -68,7 +74,6 @@ export default function App() {
   });
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
       <View style={[StyleSheet.absoluteFill, { backgroundColor: C.bg }]}>
         {loaded ? <StoreProvider><Shell /></StoreProvider> : null}
       </View>
