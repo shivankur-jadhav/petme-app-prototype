@@ -1,5 +1,5 @@
 import React from "react";
-import Svg, { Path } from "react-native-svg";
+import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 import { C } from "../theme";
 
 // Stroke icons on a 24px grid. Every shape is a path so they render the same on iOS and Android.
@@ -37,6 +37,32 @@ export function Icon({ name, size = 20, color = C.ink, width = 1.7 }: { name: st
       {paths.map((d, i) => (
         <Path key={i} d={d} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
       ))}
+    </Svg>
+  );
+}
+
+/** PetMe brand mark: the leaping orca. Same paths as assets/brand/*.svg. */
+const ORCA = {
+  body: "M 404 264 C 394 216, 352 188, 308 182 C 300 150, 284 116, 256 94 C 262 130, 258 162, 246 190 C 206 202, 176 230, 166 270 C 156 304, 158 336, 168 360 C 146 364, 124 374, 106 396 C 132 394, 154 392, 170 386 C 168 406, 172 428, 186 448 C 192 422, 194 402, 190 380 C 186 352, 188 318, 206 292 C 228 264, 262 264, 298 278 C 340 294, 382 292, 404 264 Z",
+  fin: "M 300 278 C 316 300, 310 330, 288 346 C 272 334, 276 302, 292 280 Z",
+  chin: "M 388 262 C 374 278, 348 284, 320 277 C 342 269, 366 265, 388 262 Z",
+  flank: "M 182 290 C 184 266, 198 248, 222 238 C 206 254, 198 270, 196 292 Z",
+  eye: "M 373.4 231.2 A 20 8 -14 1 1 334.6 240.8 A 20 8 -14 1 1 373.4 231.2 Z",
+};
+export function OrcaMark({ size = 28, mark = C.bg }: { size?: number; mark?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="96 84 330 372">
+      <Defs>
+        <LinearGradient id="orcaGrad" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={C.primaryHi} />
+          <Stop offset="1" stopColor={C.tertiary} />
+        </LinearGradient>
+      </Defs>
+      <Path d={ORCA.body} fill="url(#orcaGrad)" />
+      <Path d={ORCA.fin} fill="url(#orcaGrad)" />
+      <Path d={ORCA.eye} fill={mark} />
+      <Path d={ORCA.chin} fill={mark} />
+      <Path d={ORCA.flank} fill={mark} />
     </Svg>
   );
 }

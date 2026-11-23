@@ -35,7 +35,9 @@ Source: `reference/stitch/DESIGN.md` and the four screen PNGs next to it. Tokens
 3. Payments after the visit (Stripe), plan billing.
 4. Push notifications: booking confirmed, tech 15 minutes away, report ready.
 5. Real livestock records per tank, editable by the technician.
-6. App icon and splash art.
+
+## Brand
+Logo is a leaping orca (original artwork; files in `assets/brand/`, in-app as `OrcaMark` in `src/components/Icon.tsx`). Cyan-to-blue gradient on abyss, or abyss on white. App icon, Android adaptive icon and splash live in `assets/` and are wired in `app.json`.
 
 ## Checking work
 Run `npm run typecheck`, then open in Expo Go on a real phone: every tab, booking flow (including the validation shake), example jobs in Pro, completing a job with readings, and the report it produces.

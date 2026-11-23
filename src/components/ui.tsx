@@ -7,7 +7,7 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R, SPRING, T } from "../theme";
-import { Icon } from "./Icon";
+import { Icon, OrcaMark } from "./Icon";
 import { useStore } from "../store";
 
 export const haptic = {
@@ -241,7 +241,7 @@ export function AppBar() {
   return (
     <View style={st.appbar}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={st.mark}><Icon name="fish" color={C.primary} /></View>
+        <View style={st.mark}><OrcaMark size={26} mark={C.sHigh} /></View>
         <View>
           <Text style={st.brand}>PetMe</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>

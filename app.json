@@ -8,6 +8,8 @@
     "backgroundColor": "#061426",
     "newArchEnabled": true,
     "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#061426"
     },
     "ios": {
@@ -16,7 +18,12 @@
     },
     "android": {
       "package": "com.petme.app",
-      "edgeToEdgeEnabled": true
-    }
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#061426"
+      }
+    },
+    "icon": "./assets/icon.png"
   }
 }
