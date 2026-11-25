@@ -1,8 +1,8 @@
 import React from "react";
 import { Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
-import { C, R, T } from "../theme";
-import { CritterArt } from "../components/Icon";
+import { T } from "../theme";
+import { PhotoCredits, SpeciesThumb } from "../components/SpeciesThumb";
 import { Badge, Btn, Panel, Screen, Title, enter, layout } from "../components/ui";
 import { TabId } from "../components/visuals";
 import { useStore } from "../store";
@@ -23,9 +23,7 @@ export default function LivestockScreen({ go }: { go: (t: TabId) => void }) {
         return (
           <Panel key={tank.type + f.id} index={i + 1}>
             <View style={{ flexDirection: "row", gap: 12 }}>
-              <View style={{ width: 84, height: 84, borderRadius: R.md, backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}>
-                <CritterArt art={f.id} width={64} />
-              </View>
+              <SpeciesThumb species={{ name: f.name, art: f.id, wiki: f.wiki }} size={84} />
               <View style={{ flex: 1, gap: 3 }}>
                 <Text style={[T.label, { letterSpacing: 0.8 }]}>{f.sci}</Text>
                 <Text style={[T.h2, { fontSize: 18 }]}>{f.name}</Text>
@@ -49,6 +47,7 @@ export default function LivestockScreen({ go }: { go: (t: TabId) => void }) {
           </Panel>
         );
       })}
+      <PhotoCredits species={ideas.map((f) => ({ name: f.name, art: f.id, wiki: f.wiki }))} />
       <Animated.Text entering={enter(6)} style={T.small}>Minimum tank sizes are common hobby guidance, not a guarantee. Your technician confirms fit with your current fish before anything is added.</Animated.Text>
       {wish.length ? (
         <Animated.View entering={FadeInDown.springify()} exiting={FadeOut} layout={layout}>

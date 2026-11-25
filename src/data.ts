@@ -9,7 +9,8 @@ export type Status = "new" | "confirmed" | "done" | "cancelled";
 /** A video (or photo) of the real tank. Stored as a file on the phone; `uri` points at the saved copy. */
 export type TankMedia = { uri: string; kind: "video" | "image"; addedAt: number; by: "customer" | "technician"; ref?: string };
 
-export type Tank = { name: string; type: TankType; size: SizeId; sample: boolean; media?: TankMedia };
+/** `fishPhotos`: photos of the customer's own fish, keyed by species name; they replace the stock photo. */
+export type Tank = { name: string; type: TankType; size: SizeId; sample: boolean; media?: TankMedia; fishPhotos?: Record<string, TankMedia> };
 
 /** The customer's own details, saved on the phone and used to fill in bookings. */
 export type Profile = {
@@ -256,19 +257,19 @@ export const STOCK: Record<"fresh" | "salt", Critter[]> = {
     { name: "Nerite snails", kind: "inv", qty: 3, role: "Glass and rock grazers", color: "#B45309", art: "nerite", wiki: ["Vittina natalensis", "Zebra nerite", "Neritidae"] },
   ],
 };
-export type Idea = { id: string; name: string; sci: string; minGal: number; fit: "good" | "caution"; color: string; note: string; tags: string[] };
+export type Idea = { id: string; name: string; sci: string; minGal: number; fit: "good" | "caution"; color: string; note: string; tags: string[]; wiki: string[] };
 export const IDEAS: Record<"fresh" | "salt", Idea[]> = {
   salt: [
-    { id: "firefish", name: "Firefish goby", sci: "Nemateleotris magnifica", minGal: 20, fit: "good", color: "#F43F5E", note: "Peaceful hoverer that stays near a bolt hole. Safe with corals and with clownfish.", tags: ["Reef safe", "Peaceful"] },
-    { id: "gramma", name: "Royal gramma", sci: "Gramma loreto", minGal: 30, fit: "good", color: "#A855F7", note: "Purple and yellow cave dweller. Hardy and calm, but keep only one per tank.", tags: ["Reef safe", "One per tank"] },
-    { id: "mandarin", name: "Mandarin dragonet", sci: "Synchiropus splendidus", minGal: 30, fit: "caution", color: "#22D3EE", note: "Eats live copepods almost all day. Only for mature tanks with plenty of live rock.", tags: ["Needs mature tank", "Slow feeder"] },
-    { id: "coralbeauty", name: "Coral beauty angelfish", sci: "Centropyge bispinosa", minGal: 70, fit: "caution", color: "#6366F1", note: "Bright dwarf angel. May nip some soft and LPS corals, so watch it closely.", tags: ["Reef with caution", "Semi-aggressive"] },
+    { id: "firefish", wiki: ["Nemateleotris magnifica"], name: "Firefish goby", sci: "Nemateleotris magnifica", minGal: 20, fit: "good", color: "#F43F5E", note: "Peaceful hoverer that stays near a bolt hole. Safe with corals and with clownfish.", tags: ["Reef safe", "Peaceful"] },
+    { id: "gramma", wiki: ["Royal gramma", "Gramma loreto"], name: "Royal gramma", sci: "Gramma loreto", minGal: 30, fit: "good", color: "#A855F7", note: "Purple and yellow cave dweller. Hardy and calm, but keep only one per tank.", tags: ["Reef safe", "One per tank"] },
+    { id: "mandarin", wiki: ["Mandarinfish", "Synchiropus splendidus"], name: "Mandarin dragonet", sci: "Synchiropus splendidus", minGal: 30, fit: "caution", color: "#22D3EE", note: "Eats live copepods almost all day. Only for mature tanks with plenty of live rock.", tags: ["Needs mature tank", "Slow feeder"] },
+    { id: "coralbeauty", wiki: ["Centropyge bispinosa"], name: "Coral beauty angelfish", sci: "Centropyge bispinosa", minGal: 70, fit: "caution", color: "#6366F1", note: "Bright dwarf angel. May nip some soft and LPS corals, so watch it closely.", tags: ["Reef with caution", "Semi-aggressive"] },
   ],
   fresh: [
-    { id: "rasbora", name: "Harlequin rasbora", sci: "Trigonostigma heteromorpha", minGal: 10, fit: "good", color: "#FB923C", note: "Calm schooling fish. Keep in a group of eight or more for best colour.", tags: ["Peaceful", "School of 8+"] },
-    { id: "gourami", name: "Honey gourami", sci: "Trichogaster chuna", minGal: 10, fit: "good", color: "#F59E0B", note: "Gentle centrepiece fish that likes floating plants and slow flow.", tags: ["Peaceful", "Plant friendly"] },
-    { id: "otocinclus", name: "Otocinclus", sci: "Otocinclus spp.", minGal: 20, fit: "caution", color: "#A3A380", note: "Excellent algae eater, but delicate when new. Add only to a stable, mature tank.", tags: ["Needs mature tank", "Group of 4+"] },
-    { id: "kuhli", name: "Kuhli loach", sci: "Pangio kuhlii", minGal: 20, fit: "good", color: "#EAB308", note: "Shy, eel-like bottom dweller. Needs soft sand and hiding places.", tags: ["Peaceful", "Soft sand"] },
+    { id: "rasbora", wiki: ["Harlequin rasbora"], name: "Harlequin rasbora", sci: "Trigonostigma heteromorpha", minGal: 10, fit: "good", color: "#FB923C", note: "Calm schooling fish. Keep in a group of eight or more for best colour.", tags: ["Peaceful", "School of 8+"] },
+    { id: "gourami", wiki: ["Honey gourami", "Trichogaster chuna"], name: "Honey gourami", sci: "Trichogaster chuna", minGal: 10, fit: "good", color: "#F59E0B", note: "Gentle centrepiece fish that likes floating plants and slow flow.", tags: ["Peaceful", "Plant friendly"] },
+    { id: "otocinclus", wiki: ["Otocinclus", "Otocinclus vittatus"], name: "Otocinclus", sci: "Otocinclus spp.", minGal: 20, fit: "caution", color: "#A3A380", note: "Excellent algae eater, but delicate when new. Add only to a stable, mature tank.", tags: ["Needs mature tank", "Group of 4+"] },
+    { id: "kuhli", wiki: ["Kuhli loach", "Pangio kuhlii"], name: "Kuhli loach", sci: "Pangio kuhlii", minGal: 20, fit: "good", color: "#EAB308", note: "Shy, eel-like bottom dweller. Needs soft sand and hiding places.", tags: ["Peaceful", "Soft sand"] },
   ],
 };
 export const ALL_IDEAS = [...IDEAS.salt, ...IDEAS.fresh];

@@ -8,16 +8,17 @@ import { TankMedia } from "./data";
 
 export type PickResult = { media: TankMedia } | { denied: true } | { canceled: true };
 
-export async function pickTankMedia(source: "camera" | "library", by: TankMedia["by"], ref?: string): Promise<PickResult> {
+export async function pickTankMedia(source: "camera" | "library", by: TankMedia["by"], ref?: string, photoOnly = false): Promise<PickResult> {
   if (source === "camera") {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
     if (!cam.granted) return { denied: true };
   }
   const options: ImagePicker.ImagePickerOptions = {
-    mediaTypes: ["videos", "images"],
+    mediaTypes: photoOnly ? ["images"] : ["videos", "images"],
     videoMaxDuration: 30,
     quality: 0.8,
-    allowsEditing: false,
+    allowsEditing: photoOnly, // lets the person crop a fish photo to a square
+    aspect: [1, 1],
   };
   const res = source === "camera" ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
   if (res.canceled || !res.assets?.length) return { canceled: true };

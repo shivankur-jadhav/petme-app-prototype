@@ -18,6 +18,35 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
   const [filter, setFilter] = useState<"all" | "fish" | "inv">("all");
   const [videoPanel, setVideoPanel] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [photoFor, setPhotoFor] = useState<string | null>(null);
+
+  // Photos of the customer's own fish replace the stock species photo in Current livestock.
+  const fishPhotos = tank.fishPhotos || {};
+  const addFishPhoto = async (name: string, source: "camera" | "library") => {
+    setBusy(true);
+    try {
+      const r = await pickTankMedia(source, "customer", undefined, true);
+      if ("denied" in r) { toast("Allow camera access in your phone's Settings to photograph your fish."); return; }
+      if ("canceled" in r) return;
+      forgetMedia(fishPhotos[name]);
+      setTank({ ...tank, fishPhotos: { ...fishPhotos, [name]: r.media } });
+      setPhotoFor(null);
+      haptic.success();
+      toast("Photo added.");
+    } catch {
+      toast("Couldn't open that. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const removeFishPhoto = (name: string) => {
+    forgetMedia(fishPhotos[name]);
+    const next = { ...fishPhotos };
+    delete next[name];
+    setTank({ ...tank, fishPhotos: next });
+    setPhotoFor(null);
+    toast("Photo removed.");
+  };
 
   // The tank shown at the top: the newest of the customer's own video and any video a technician
   // attached when finishing a visit. Without either, the animated illustration stands in.
@@ -147,17 +176,36 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
         <View>
           {shown.map((s, i) => (
             <Animated.View key={tank.type + s.name} entering={FadeIn.delay(i * 40)} exiting={FadeOut.duration(120)} layout={layout}
-              style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderTopColor: C.hair }}>
-              <SpeciesThumb critter={s} size={60} />
-              <View style={{ flex: 1 }}>
-                <Text style={T.h3}>{s.name}</Text>
-                <Text style={T.small}>{s.role}</Text>
+              style={{ paddingVertical: 12, gap: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.hair }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                <SpeciesThumb species={s} own={fishPhotos[s.name]?.uri} size={60} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={T.h3}>{s.name}</Text>
+                  <Text style={T.small}>{s.role}</Text>
+                  {fishPhotos[s.name] ? <Text style={[T.small, { color: C.primary, fontSize: 11 }]}>Your photo</Text> : null}
+                </View>
+                <View style={{ alignItems: "flex-end", gap: 8 }}>
+                  <Badge text={`Qty ${s.qty}`} tone="tert" />
+                  <Press onPress={() => setPhotoFor(photoFor === s.name ? null : s.name)} accessibilityLabel={`Photograph your ${s.name}`}
+                    style={{ width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: photoFor === s.name ? C.primaryTint : C.sHigh }}>
+                    <Icon name={photoFor === s.name ? "close" : "camera"} size={16} color={photoFor === s.name ? C.primary : C.muted} />
+                  </Press>
+                </View>
               </View>
-              <Badge text={`Qty ${s.qty}`} tone="tert" />
+              {photoFor === s.name ? (
+                <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(120)} style={{ gap: 8 }}>
+                  <Text style={T.small}>Show your own {s.name.toLowerCase()} here instead of the stock photo.</Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    <Btn small icon="camera" label="Take photo" disabled={busy} onPress={() => addFishPhoto(s.name, "camera")} />
+                    <Btn small kind="sec" icon="gallery" label="Choose photo" disabled={busy} onPress={() => addFishPhoto(s.name, "library")} />
+                    {fishPhotos[s.name] ? <Btn small kind="plain" icon="trash" label="Use stock photo" onPress={() => removeFishPhoto(s.name)} /> : null}
+                  </View>
+                </Animated.View>
+              ) : null}
             </Animated.View>
           ))}
         </View>
-        <PhotoCredits critters={stock} />
+        <PhotoCredits species={stock.filter((c) => !fishPhotos[c.name])} />
         <Btn label="See fish that suit this tank" kind="ghost" icon="fish" onPress={() => go("livestock")} />
       </Panel>
     </Screen>
