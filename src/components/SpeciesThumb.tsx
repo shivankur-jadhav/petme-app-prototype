@@ -9,16 +9,17 @@ import { CritterArt, Icon } from "./Icon";
 import { Press, layout } from "./ui";
 import { useSpeciesPhoto } from "../speciesPhoto";
 import { SPECIES_PHOTOS } from "../speciesPhotos";
+import { ALL_IDEAS, STOCK } from "../data";
 
 type Species = { name: string; art: string; wiki: string[] };
 
-export function SpeciesThumb({ species, own, size = 60 }: { species: Species; own?: string; size?: number }) {
+export function SpeciesThumb({ species, own, size = 60, round }: { species: Species; own?: string; size?: number; round?: boolean }) {
   const bundled = SPECIES_PHOTOS[species.art];
   const photo = useSpeciesPhoto(own || bundled ? undefined : species.wiki);
   const [failed, setFailed] = useState<string | null>(null);
   const uri = own || photo?.uri;
   return (
-    <View style={{ width: size, height: size, borderRadius: 6, overflow: "hidden", backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}>
+    <View style={{ width: size, height: size, borderRadius: round ? size / 2 : 6, overflow: "hidden", backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}>
       {!own && bundled ? (
         <Animated.Image source={bundled.src} resizeMode="cover" accessibilityLabel={`Photo of ${species.name}`} style={{ width: size, height: size }} />
       ) : uri && failed !== uri ? (
@@ -69,5 +70,32 @@ export function PhotoCredits({ species }: { species: Species[] }) {
         </Animated.View>
       ) : null}
     </Animated.View>
+  );
+}
+
+/** Find a species by the name saved on a booking (wishlist), from the suggestions or the current stock. */
+const KNOWN: Species[] = [
+  ...ALL_IDEAS.map((f) => ({ name: f.name, art: f.id, wiki: f.wiki })),
+  ...STOCK.salt, ...STOCK.fresh,
+];
+export const speciesByName = (name: string) => KNOWN.find((s) => s.name === name);
+
+/** Fish named on a booking, each with a small round photo, plus the photo credits the licences require. */
+export function FishChips({ names, label }: { names: string[]; label?: string }) {
+  const found = names.map((n) => ({ n, s: speciesByName(n) }));
+  const known = found.map((f) => f.s).filter(Boolean) as Species[];
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+        {label ? <Text style={T.label}>{label}</Text> : null}
+        {found.map(({ n, s }) => (
+          <View key={n} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 3, paddingRight: 10, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.tertTint }}>
+            {s ? <SpeciesThumb species={s} size={26} round /> : null}
+            <Text style={[T.small, { color: C.ink }]}>{n}</Text>
+          </View>
+        ))}
+      </View>
+      <PhotoCredits species={known} />
+    </View>
   );
 }

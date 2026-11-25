@@ -5,6 +5,7 @@ import { C, F, R, T } from "../theme";
 import { Badge, Btn, Chips, Empty, Field, Label, Panel, Screen, Title, enter, haptic, layout } from "../components/ui";
 import { TabId } from "../components/visuals";
 import { byNewest, useStore } from "../store";
+import { FishChips } from "../components/SpeciesThumb";
 import { Booking, TankMedia, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, cancelPatch, econ, BASE, TRAVEL_COST_PER_KM, fmtDate, grandTotal, restorePatch, metricsFor, money, money0, revenue } from "../data";
 import { StatusBadge, tankLine } from "./HistoryScreen";
 import { Icon } from "../components/Icon";
@@ -116,7 +117,7 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
                   ))}
                 </View>
                 {b.notes ? <Text style={[T.body2, { backgroundColor: C.bg, padding: 10, borderRadius: R.sm }]}>{b.notes}</Text> : null}
-                {b.wishlist?.length ? <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, alignItems: "center" }}><Label>Wants to discuss</Label>{b.wishlist.map((n) => <Badge key={n} text={n} tone="tert" />)}</View> : null}
+                {b.wishlist?.length ? <FishChips names={b.wishlist} label="Wants to discuss" /> : null}
                 {completing === b.id ? (
                   <CompleteForm b={b} toast={toast} onCancel={() => setCompleting(null)} onDone={(results, techNotes, media) => {
                     patchBooking(b.id, { status: "done", results, techNotes, media, completedAt: Date.now() });

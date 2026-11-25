@@ -5,6 +5,7 @@ import { C, F, R, T } from "../theme";
 import { Icon } from "../components/Icon";
 import { Badge, Btn, Check, Chips, Field, Label, Ledger, Panel, Press, Screen, SecHeader, Segmented, Title, haptic, layout } from "../components/ui";
 import { useStore } from "../store";
+import { FishChips } from "../components/SpeciesThumb";
 import {
   ALL_IDEAS, CITIES, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, addressLine, dateOptions, fmtDate, fmtDur, makeBooking, phoneOk, money, money0, quote,
   RecurId, ServiceId, SizeId, TankType,
@@ -177,7 +178,7 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
           {wishItems.length ? (
             <Animated.View entering={FadeIn} style={{ gap: 6 }}>
               <Label>Fish to discuss at this visit</Label>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>{wishItems.map((i) => <Badge key={i!.id} text={i!.name} tone="tert" />)}</View>
+              <FishChips names={wishItems.map((i) => i!.name)} />
             </Animated.View>
           ) : null}
           <Check label="Text me when the technician is 15 minutes away" value={sms} onChange={setSms} />

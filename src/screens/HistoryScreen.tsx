@@ -8,6 +8,7 @@ import { Badge, Btn, Empty, Label, Ledger, Panel, Press, Screen, SecHeader, Titl
 import { MetricGrid, TabId } from "../components/visuals";
 import { TankPill, TankView, mediaCaption } from "../components/TankView";
 import { byNewest, useStore } from "../store";
+import { FishChips } from "../components/SpeciesThumb";
 import { Booking, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, fmtDate, cancelPatch, fmtDur, grandTotal, metricsFor, money, refundable, tasksFor } from "../data";
 
 export const STATUS: Record<string, [string, string]> = { new: ["Requested", "tert"], confirmed: ["Confirmed", "cyan"], done: ["Completed", "ok"], cancelled: ["Cancelled", "slate"] };
@@ -126,7 +127,7 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
           <Panel index={5} flat>
             <Label>Your notes</Label>
             {b.notes ? <Text style={[T.body2, { backgroundColor: C.bg, padding: 10, borderRadius: R.sm }]}>{b.notes}</Text> : null}
-            {b.wishlist?.length ? <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>{b.wishlist.map((n) => <Badge key={n} text={n} tone="tert" />)}</View> : null}
+            {b.wishlist?.length ? <FishChips names={b.wishlist} label="Fish to discuss" /> : null}
           </Panel>
         ) : null}
 
