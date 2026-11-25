@@ -35,6 +35,9 @@ The top of the Tanks screen is `TankView` (`src/components/TankView.tsx`): a dra
 - Files are copied into the app's document folder (`tank-media/`) with expo-file-system so they survive cache clearing; `forgetMedia` deletes replaced copies.
 - Until there is a shared backend, a technician's video only exists on the phone that recorded it. With the backend, upload to storage and save the URL in `media.uri`.
 
+## Species photos
+Current livestock shows real photos (`SpeciesThumb` in `src/components/SpeciesThumb.tsx`). Each `Critter` has `wiki`: Wikipedia page titles to try in order. On the phone, `src/speciesPhoto.ts` reads the page's lead image, keeps it only if it is a JPEG photo hosted on Wikimedia Commons (so freely licensed), fetches a 320px thumbnail with photographer and licence, and caches the result in AsyncStorage. The drawn `CritterArt` shows while loading, offline, or when no photo exists. Credits are listed under the section ("Photos from Wikimedia Commons · Credits"); keep them visible wherever these photos appear, because the licences require it.
+
 ## Data model
 `Booking` in `src/data.ts` is the core record: service, tank type/size, city + estimated km from the base, date + window, contact, price breakdown, status (`new → confirmed → done`, or `cancelled`), and on completion `results` (water readings) + `techNotes`. Pricing is `quote()`; margins are `econ()`. Travel is charged by distance from the base at Bramalea City Centre (`BASE`, `roadKm()`, `travelFee()` in `data.ts`) and is folded into the service price, never shown as its own line. All numbers are starter assumptions.
 

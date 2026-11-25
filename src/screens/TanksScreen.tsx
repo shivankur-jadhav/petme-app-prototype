@@ -2,7 +2,8 @@ import React, { useMemo, useState } from "react";
 import { Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { C, T } from "../theme";
-import { Icon, CritterArt } from "../components/Icon";
+import { Icon } from "../components/Icon";
+import { PhotoCredits, SpeciesThumb } from "../components/SpeciesThumb";
 import { Badge, Btn, Chips, Field, Label, Panel, Press, Screen, SecHeader, Segmented, enter, haptic, layout, st } from "../components/ui";
 import { TankPill, TankView, mediaCaption } from "../components/TankView";
 import { forgetMedia, latestTankMedia, pickTankMedia } from "../media";
@@ -147,9 +148,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
           {shown.map((s, i) => (
             <Animated.View key={tank.type + s.name} entering={FadeIn.delay(i * 40)} exiting={FadeOut.duration(120)} layout={layout}
               style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderTopColor: C.hair }}>
-              <View style={{ width: 52, height: 52, borderRadius: 6, backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}>
-                <CritterArt art={s.art} width={44} />
-              </View>
+              <SpeciesThumb critter={s} size={60} />
               <View style={{ flex: 1 }}>
                 <Text style={T.h3}>{s.name}</Text>
                 <Text style={T.small}>{s.role}</Text>
@@ -158,6 +157,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
             </Animated.View>
           ))}
         </View>
+        <PhotoCredits critters={stock} />
         <Btn label="See fish that suit this tank" kind="ghost" icon="fish" onPress={() => go("livestock")} />
       </Panel>
     </Screen>
