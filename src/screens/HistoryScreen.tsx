@@ -6,6 +6,7 @@ import { C, F, R, T, themed } from "../theme";
 import { Icon } from "../components/Icon";
 import { Badge, Btn, Empty, Label, Ledger, Panel, Press, Screen, SecHeader, Title, enter, haptic, layout } from "../components/ui";
 import { MetricGrid, TabId } from "../components/visuals";
+import { TankPill, TankView, mediaCaption } from "../components/TankView";
 import { byNewest, useStore } from "../store";
 import { Booking, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, fmtDate, cancelPatch, fmtDur, grandTotal, metricsFor, money, refundable, tasksFor } from "../data";
 
@@ -105,6 +106,12 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
           <Panel index={3}>
             <SecHeader title="Post-service chemistry" icon="flask" />
             <MetricGrid readings={b.results} type={b.type} metrics={metricsFor(b.type)} />
+          </Panel>
+        ) : null}
+
+        {b.media ? (
+          <Panel index={4} style={{ padding: 0, overflow: "hidden", gap: 0 }}>
+            <TankView type={b.type} media={b.media} height={190} footer={<TankPill icon={b.media.kind === "video" ? "video" : "gallery"} text={mediaCaption(b.media)} />} />
           </Panel>
         ) : null}
 

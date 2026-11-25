@@ -6,7 +6,10 @@ export type ServiceId = "clean" | "consult" | "setup" | "move" | "emergency";
 export type RecurId = "once" | "w4" | "w2";
 export type Status = "new" | "confirmed" | "done" | "cancelled";
 
-export type Tank = { name: string; type: TankType; size: SizeId; sample: boolean };
+/** A video (or photo) of the real tank. Stored as a file on the phone; `uri` points at the saved copy. */
+export type TankMedia = { uri: string; kind: "video" | "image"; addedAt: number; by: "customer" | "technician"; ref?: string };
+
+export type Tank = { name: string; type: TankType; size: SizeId; sample: boolean; media?: TankMedia };
 
 /** The customer's own details, saved on the phone and used to fill in bookings. */
 export type Profile = {
@@ -59,6 +62,7 @@ export type Booking = {
   completedAt?: number;
   results?: Record<string, number>;
   techNotes?: string;
+  media?: TankMedia; // tank video the technician recorded at this visit
 };
 
 export const SIZES: { id: SizeId; name: string; short: string; gal: number }[] = [

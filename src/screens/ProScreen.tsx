@@ -5,13 +5,29 @@ import { C, F, R, T } from "../theme";
 import { Badge, Btn, Chips, Empty, Field, Label, Panel, Screen, Title, enter, haptic, layout } from "../components/ui";
 import { TabId } from "../components/visuals";
 import { byNewest, useStore } from "../store";
-import { Booking, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, cancelPatch, econ, BASE, TRAVEL_COST_PER_KM, fmtDate, grandTotal, restorePatch, metricsFor, money, money0, revenue } from "../data";
+import { Booking, TankMedia, LABOUR, RECUR, SERVICES, SUPPLY, WINDOWS, by, chemOf, cancelPatch, econ, BASE, TRAVEL_COST_PER_KM, fmtDate, grandTotal, restorePatch, metricsFor, money, money0, revenue } from "../data";
 import { StatusBadge, tankLine } from "./HistoryScreen";
+import { Icon } from "../components/Icon";
+import { forgetMedia, pickTankMedia } from "../media";
 
-function CompleteForm({ b, onDone, onCancel }: { b: Booking; onDone: (r: Record<string, number>, notes: string) => void; onCancel: () => void }) {
+function CompleteForm({ b, onDone, onCancel, toast }: { b: Booking; onDone: (r: Record<string, number>, notes: string, media?: TankMedia) => void; onCancel: () => void; toast: (t: string) => void }) {
   const ms = metricsFor(b.type);
   const [vals, setVals] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
+  const [media, setMedia] = useState<TankMedia | undefined>();
+  const [busy, setBusy] = useState(false);
+  const attach = async (source: "camera" | "library") => {
+    setBusy(true);
+    try {
+      const r = await pickTankMedia(source, "technician", b.ref);
+      if ("denied" in r) toast("Allow camera access in Settings to film the tank.");
+      else if ("media" in r) { forgetMedia(media); setMedia(r.media); haptic.success(); }
+    } catch {
+      toast("Couldn't open that. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <Animated.View entering={FadeInDown.springify().damping(18)} exiting={FadeOut.duration(150)} layout={layout} style={{ gap: 10, borderTopWidth: 1, borderTopColor: C.hair, paddingTop: 12 }}>
       <Label color={C.primary}>Log water test and complete</Label>
@@ -22,13 +38,28 @@ function CompleteForm({ b, onDone, onCancel }: { b: Booking; onDone: (r: Record<
         ))}
       </View>
       <Field label="Notes for the customer" value={notes} onChangeText={setNotes} multiline placeholder="What you did, what you noticed, advice for the customer" />
+      <View style={{ gap: 8 }}>
+        <Label>Tank video for the customer</Label>
+        {media ? (
+          <Animated.View entering={FadeIn} style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <Icon name="check" size={16} color={C.ok} width={2.4} />
+            <Text style={[T.body2, { flex: 1 }]}>{media.kind === "video" ? "Video" : "Photo"} attached. It will show at the top of the customer's Tanks screen.</Text>
+            <Btn small kind="plain" label="Remove" onPress={() => { forgetMedia(media); setMedia(undefined); }} />
+          </Animated.View>
+        ) : (
+          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+            <Btn small kind="sec" icon="camera" label="Record tank" disabled={busy} onPress={() => attach("camera")} />
+            <Btn small kind="plain" icon="gallery" label="Choose" disabled={busy} onPress={() => attach("library")} />
+          </View>
+        )}
+      </View>
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
         <Btn small label="Save report and complete" icon="check" onPress={() => {
           const r: Record<string, number> = {};
           Object.keys(vals).forEach((k) => { const n = Number(vals[k]); if (vals[k] !== "" && !isNaN(n)) r[k] = n; });
-          onDone(r, notes.trim());
+          onDone(r, notes.trim(), media);
         }} />
-        <Btn small kind="plain" label="Cancel" onPress={onCancel} />
+        <Btn small kind="plain" label="Cancel" onPress={() => { forgetMedia(media); onCancel(); }} />
       </View>
     </Animated.View>
   );
@@ -87,8 +118,8 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
                 {b.notes ? <Text style={[T.body2, { backgroundColor: C.bg, padding: 10, borderRadius: R.sm }]}>{b.notes}</Text> : null}
                 {b.wishlist?.length ? <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, alignItems: "center" }}><Label>Wants to discuss</Label>{b.wishlist.map((n) => <Badge key={n} text={n} tone="tert" />)}</View> : null}
                 {completing === b.id ? (
-                  <CompleteForm b={b} onCancel={() => setCompleting(null)} onDone={(results, techNotes) => {
-                    patchBooking(b.id, { status: "done", results, techNotes, completedAt: Date.now() });
+                  <CompleteForm b={b} toast={toast} onCancel={() => setCompleting(null)} onDone={(results, techNotes, media) => {
+                    patchBooking(b.id, { status: "done", results, techNotes, media, completedAt: Date.now() });
                     setCompleting(null); haptic.success(); toast("Report sent to the customer.");
                   }} />
                 ) : (

@@ -3,16 +3,42 @@ import { Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { C, T } from "../theme";
 import { Icon, CritterArt } from "../components/Icon";
-import { Badge, Btn, Chips, Field, Label, Panel, Press, Screen, SecHeader, Segmented, enter, layout, st } from "../components/ui";
-import { MetricGrid, TankHero, TabId } from "../components/visuals";
+import { Badge, Btn, Chips, Field, Label, Panel, Press, Screen, SecHeader, Segmented, enter, haptic, layout, st } from "../components/ui";
+import { TankPill, TankView, mediaCaption } from "../components/TankView";
+import { forgetMedia, latestTankMedia, pickTankMedia } from "../media";
+import { MetricGrid, TabId } from "../components/visuals";
 import { useStore } from "../store";
-import { RECUR, SAMPLE_READINGS, SERVICES, SIZES, STOCK, TYPES, WINDOWS, by, chemOf, fmtDate, metricsFor, money, todayIso, SizeId, TankType } from "../data";
+import { RECUR, SAMPLE_READINGS, SERVICES, SIZES, STOCK, TYPES, WINDOWS, by, chemOf, fmtDate, iso, metricsFor, money, todayIso, SizeId, TankType } from "../data";
 
 export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void; openReport: (id: string) => void }) {
   const { tank, setTank, bookings, toast } = useStore();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(tank);
   const [filter, setFilter] = useState<"all" | "fish" | "inv">("all");
+  const [videoPanel, setVideoPanel] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // The tank shown at the top: the newest of the customer's own video and any video a technician
+  // attached when finishing a visit. Without either, the animated illustration stands in.
+  const media = useMemo(() => latestTankMedia(tank.media, bookings.filter((b) => b.status === "done").map((b) => b.media)), [tank.media, bookings]);
+
+  const addMedia = async (source: "camera" | "library") => {
+    setBusy(true);
+    try {
+      const r = await pickTankMedia(source, "customer");
+      if ("denied" in r) { toast("Allow camera access in your phone's Settings to film your tank."); return; }
+      if ("canceled" in r) return;
+      forgetMedia(tank.media);
+      setTank({ ...tank, media: r.media, sample: false });
+      setVideoPanel(false);
+      haptic.success();
+      toast(r.media.kind === "video" ? "Tank video added." : "Tank photo added.");
+    } catch {
+      toast("Couldn't open that. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const report = useMemo(() => bookings.filter((b) => b.status === "done" && b.results && Object.keys(b.results).length)
     .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0))[0], [bookings]);
@@ -29,23 +55,50 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
   return (
     <Screen>
       <Animated.View entering={enter(0)} layout={layout} style={[st.panel, { padding: 0, gap: 0, overflow: "hidden", backgroundColor: C.sLow }]}>
-        <TankHero type={tank.type}>
-          <Badge text="My tank" />
-          {tank.sample ? <Badge text="Sample profile" tone="slate" dashed /> : null}
-        </TankHero>
+        <TankView
+          type={tank.type}
+          media={media}
+          tags={<><Badge text="My tank" />{tank.sample ? <Badge text="Sample profile" tone="slate" dashed /> : null}</>}
+          footer={media ? (
+            <TankPill icon={media.kind === "video" ? "video" : "gallery"} text={mediaCaption(media)} />
+          ) : (
+            <Press onPress={() => setVideoPanel(true)} accessibilityLabel="Add a video of your tank">
+              <TankPill icon="video" text="Add a video of your tank" />
+            </Press>
+          )}
+        />
         <View style={{ padding: 16, gap: 4 }}>
           <Text style={[T.h1, { fontSize: 24 }]}>{tank.name}</Text>
           <Text style={T.small}>{type.name} · {size.name} gal</Text>
           <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 14, marginTop: 8 }}>
             <Text style={T.small}>Plan <Text style={{ color: C.tertiary }}>{next && next.recur !== "once" ? by(RECUR, next.recur)!.name : "None yet"}</Text></Text>
             <Text style={T.small}>Last service <Text style={{ color: C.tertiary }}>{report ? fmtDate(report.date, false) : "None"}</Text></Text>
-            <Press onPress={() => { setDraft(tank); setEditing(!editing); }} style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Press onPress={() => { setVideoPanel(!videoPanel); setEditing(false); }} style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Icon name={videoPanel ? "close" : "video"} size={15} color={C.muted} />
+              <Text style={[T.small, { color: C.ink2 }]}>{videoPanel ? "Close" : "Tank video"}</Text>
+            </Press>
+            <Press onPress={() => { setDraft(tank); setEditing(!editing); setVideoPanel(false); }} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <Icon name={editing ? "close" : "edit"} size={15} color={C.muted} />
               <Text style={[T.small, { color: C.ink2 }]}>{editing ? "Close" : "Edit tank"}</Text>
             </Press>
           </View>
         </View>
       </Animated.View>
+
+      {videoPanel ? (
+        <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(150)} layout={layout} style={st.panel}>
+          <SecHeader title={tank.media ? "Change your tank video" : "Add your tank video"} icon="video" />
+          <Text style={T.body2}>Film 10 to 30 seconds of your tank from the front with the tank light on. Hold your phone sideways and keep it still. It plays on a silent loop at the top of this screen. A photo works too.</Text>
+          <Btn label="Record a video" icon="camera" disabled={busy} onPress={() => addMedia("camera")} />
+          <Btn label="Choose from my phone" icon="gallery" kind="sec" disabled={busy} onPress={() => addMedia("library")} />
+          {tank.media ? (
+            <Btn label="Remove my video" icon="trash" kind="danger" disabled={busy} onPress={() => { forgetMedia(tank.media); setTank({ ...tank, media: undefined }); setVideoPanel(false); toast("Video removed."); }} />
+          ) : null}
+          {media && media.by === "technician" ? (
+            <Text style={T.small}>Showing the video your technician recorded on {fmtDate(iso(new Date(media.addedAt)))}. A video you add now shows instead.</Text>
+          ) : null}
+        </Animated.View>
+      ) : null}
 
       {editing ? (
         <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(150)} layout={layout} style={st.panel}>

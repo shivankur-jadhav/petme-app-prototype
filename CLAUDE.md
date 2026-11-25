@@ -28,6 +28,13 @@ Source: `reference/stitch/DESIGN.md` and the four screen PNGs next to it. Tokens
 - Selected states animate (sliding segmented pill, ZoomIn check marks). Numbers that change re-enter via a `key` change.
 - Keep animations on the UI thread (Reanimated shared values), and keep loops cheap (the tank hero runs 3–4 fish + 3 bubbles).
 
+## Tank video
+The top of the Tanks screen is `TankView` (`src/components/TankView.tsx`): a drawn aquarium (hood with light bar, glass reflections, base trim) that loops the customer's real tank video, muted, with expo-video. A photo shows with a slow drift; with neither, the animated `TankHero` illustration stands in.
+- Customers add one from Tanks → "Tank video" (record with the camera or choose from the phone). Technicians can attach one in Pro → "Complete with report"; it is saved on the booking (`Booking.media`) and shows in that visit's report.
+- The tank shows the newest of the customer's own video (`Tank.media`) and any technician video from a finished visit (`latestTankMedia` in `src/media.ts`).
+- Files are copied into the app's document folder (`tank-media/`) with expo-file-system so they survive cache clearing; `forgetMedia` deletes replaced copies.
+- Until there is a shared backend, a technician's video only exists on the phone that recorded it. With the backend, upload to storage and save the URL in `media.uri`.
+
 ## Data model
 `Booking` in `src/data.ts` is the core record: service, tank type/size, city + estimated km from the base, date + window, contact, price breakdown, status (`new → confirmed → done`, or `cancelled`), and on completion `results` (water readings) + `techNotes`. Pricing is `quote()`; margins are `econ()`. Travel is charged by distance from the base at Bramalea City Centre (`BASE`, `roadKm()`, `travelFee()` in `data.ts`) and is folded into the service price, never shown as its own line. All numbers are starter assumptions.
 

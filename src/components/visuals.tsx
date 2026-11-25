@@ -55,10 +55,10 @@ function Bubble({ x, delay, height }: { x: number; delay: number; height: number
   return <Animated.View style={[{ position: "absolute", left: x, bottom: 22, width: 5, height: 5, borderRadius: 3, borderWidth: 1, borderColor: "#bae6fd" }, a]} />;
 }
 
-export function TankHero({ type, children }: { type: TankType; children?: React.ReactNode }) {
+export function TankHero({ type, children, height = 168, framed }: { type: TankType; children?: React.ReactNode; height?: number; framed?: boolean }) {
   const salt = chemOf(type) === "salt";
   const [w, setW] = useState(0);
-  const h = 168;
+  const h = height;
   const rays = useSharedValue(0.5);
   useEffect(() => { rays.value = withRepeat(withSequence(withTiming(1, { duration: 2600 }), withTiming(0.45, { duration: 2600 })), -1); }, []);
   const raysStyle = useAnimatedStyle(() => ({ opacity: rays.value }));
@@ -66,7 +66,7 @@ export function TankHero({ type, children }: { type: TankType; children?: React.
     ? [{ c: "#F97316", top: 52, s: 34, d: 7000, dl: 0 }, { c: "#FACC15", top: 92, s: 26, d: 9000, dl: 900 }, { c: "#CBD5E1", top: 34, s: 22, d: 8000, dl: 1800 }]
     : [{ c: "#38BDF8", top: 48, s: 22, d: 6000, dl: 0 }, { c: "#38BDF8", top: 62, s: 22, d: 6200, dl: 250 }, { c: "#38BDF8", top: 40, s: 22, d: 6400, dl: 500 }, { c: "#E2E8F0", top: 104, s: 30, d: 9500, dl: 1200 }];
   return (
-    <View style={hs.wrap} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+    <View style={[hs.wrap, { height }, framed && { borderRadius: 0 }]} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <LinearGradient colors={["#0c3a57", "#082a42", "#061f33"]} style={[StyleSheet.absoluteFill]} />
       <Animated.View style={[StyleSheet.absoluteFill, raysStyle]}>
         <Svg width="100%" height="100%" viewBox="0 0 400 168" preserveAspectRatio="xMidYMid slice">
