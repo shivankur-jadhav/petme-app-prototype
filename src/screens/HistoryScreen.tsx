@@ -111,7 +111,7 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
 
         {b.media ? (
           <Panel index={4} style={{ padding: 0, overflow: "hidden", gap: 0 }}>
-            <TankView type={b.type} size={b.size} media={b.media} height={190} footer={<TankPill icon={b.media.kind === "video" ? "video" : "gallery"} text={mediaCaption(b.media)} />} />
+            <TankView type={b.type} media={b.media} height={190} footer={<TankPill icon={b.media.kind === "video" ? "video" : "gallery"} text={mediaCaption(b.media)} />} />
           </Panel>
         ) : null}
 

@@ -87,17 +87,11 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
       <Animated.View entering={enter(0)} layout={layout} style={[st.panel, { padding: 0, gap: 0, overflow: "hidden", backgroundColor: C.sLow }]}>
         <TankView
           type={tank.type}
-          size={tank.size}
-          stock={stock}
+          onAdd={addMedia}
+          busy={busy}
           media={media}
           tags={<><Badge text="My tank" />{tank.sample ? <Badge text="Sample profile" tone="slate" dashed /> : null}</>}
-          footer={media ? (
-            <TankPill icon={media.kind === "video" ? "video" : "gallery"} text={mediaCaption(media)} />
-          ) : (
-            <Press onPress={() => setVideoPanel(true)} accessibilityLabel="Add a video of your tank">
-              <TankPill icon="video" text="Add a video of your tank" />
-            </Press>
-          )}
+          footer={media ? <TankPill icon={media.kind === "video" ? "video" : "gallery"} text={mediaCaption(media)} /> : null}
         />
         <View style={{ padding: 16, gap: 4 }}>
           <Text style={[T.h1, { fontSize: 24 }]}>{tank.name}</Text>
