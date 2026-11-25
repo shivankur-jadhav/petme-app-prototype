@@ -26,10 +26,10 @@ Source: `reference/stitch/DESIGN.md` and the four screen PNGs next to it. Tokens
 - Screen content enters with `enter(i)` (staggered FadeInDown spring); size changes use `layout` (LinearTransition spring).
 - Every pressable uses `Press` (scale to ~0.97 + light haptic). Primary actions use soft impact; success/error use notification haptics.
 - Selected states animate (sliding segmented pill, ZoomIn check marks). Numbers that change re-enter via a `key` change.
-- Keep animations on the UI thread (Reanimated shared values), and keep loops cheap (the tank hero runs 3–4 fish + 3 bubbles).
+- Keep animations on the UI thread (Reanimated shared values), and keep loops cheap (`TankScene` swims at most 4 fish + 3 bubbles; resting species such as gobies, plecos, shrimp and snails are placed still).
 
 ## Tank video
-The top of the Tanks screen is `TankView` (`src/components/TankView.tsx`): a drawn aquarium (hood with light bar, glass reflections, base trim) that loops the customer's real tank video, muted, with expo-video. A photo shows with a slow drift; with neither, the animated `TankHero` illustration stands in.
+The top of the Tanks screen is `TankView` (`src/components/TankView.tsx`): a drawn aquarium (hood with light bar, glass reflections, base trim) that loops the customer's real tank video, muted, with expo-video. A photo shows with a slow drift; with neither, `TankScene` (`src/components/TankScene.tsx`) stands in: an illustration of the customer's own tank (reef, freshwater or planted scenery, fish scaled to the tank size) with their livestock drawn by `CritterArt`, each species placed where it lives (`PLACES`).
 - Customers add one from Tanks → "Tank video" (record with the camera or choose from the phone). Technicians can attach one in Pro → "Complete with report"; it is saved on the booking (`Booking.media`) and shows in that visit's report.
 - The tank shows the newest of the customer's own video (`Tank.media`) and any technician video from a finished visit (`latestTankMedia` in `src/media.ts`).
 - Files are copied into the app's document folder (`tank-media/`) with expo-file-system so they survive cache clearing; `forgetMedia` deletes replaced copies.

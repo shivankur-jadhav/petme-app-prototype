@@ -87,6 +87,8 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
       <Animated.View entering={enter(0)} layout={layout} style={[st.panel, { padding: 0, gap: 0, overflow: "hidden", backgroundColor: C.sLow }]}>
         <TankView
           type={tank.type}
+          size={tank.size}
+          stock={stock}
           media={media}
           tags={<><Badge text="My tank" />{tank.sample ? <Badge text="Sample profile" tone="slate" dashed /> : null}</>}
           footer={media ? (

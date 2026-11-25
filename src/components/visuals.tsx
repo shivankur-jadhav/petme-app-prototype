@@ -1,112 +1,17 @@
-// Animated visuals: the living tank hero, metric pods with range gauges, the bottom tab bar and the bottom sheet.
+// Animated visuals: metric pods with range gauges, the bottom tab bar and the bottom sheet.
 import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 type Transform = NonNullable<ViewStyle["transform"]>;
 import Animated, {
-  Easing, FadeIn, FadeOut, SlideInDown, SlideOutDown, interpolate, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming,
+  FadeIn, FadeOut, SlideInDown, SlideOutDown, useAnimatedStyle, useSharedValue, withDelay, withSpring,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
-import Svg, { Circle, Defs, Ellipse, LinearGradient as SvgGrad, Path, Stop } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R, SPRING, T, isDark, themed } from "../theme";
 import { Icon } from "./Icon";
 import { Badge, haptic } from "./ui";
 import { Metric, TankType, chemOf, judge } from "../data";
-
-/* ---------------- Tank hero ---------------- */
-function SwimFish({ width, top, color, size, duration, delay }: { width: number; top: number; color: string; size: number; duration: number; delay: number }) {
-  const p = useSharedValue(0);
-  useEffect(() => {
-    p.value = withDelay(delay, withRepeat(withTiming(2, { duration: duration * 2, easing: Easing.linear }), -1, false));
-  }, [duration, delay]);
-  const range = Math.max(0, width - size - 24);
-  const a = useAnimatedStyle(() => {
-    const t = p.value < 1 ? p.value : 2 - p.value;
-    const eased = 0.5 - 0.5 * Math.cos(Math.PI * t);
-    return {
-      transform: [
-        { translateX: 12 + eased * range },
-        { translateY: Math.sin(p.value * Math.PI * 3) * 4 },
-        { scaleX: p.value < 1 ? -1 : 1 },
-      ] as Transform,
-    };
-  });
-  return (
-    <Animated.View style={[{ position: "absolute", top, left: 0 }, a]}>
-      <Svg width={size} height={size * 0.62} viewBox="0 0 48 30">
-        <Path d="M4 15c6-10 20-12 28-4l10-6v20l-10-6c-8 8-22 6-28-4z" fill={color} />
-        <Circle cx={13} cy={13} r={1.8} fill={C.bg} />
-      </Svg>
-    </Animated.View>
-  );
-}
-
-function Bubble({ x, delay, height }: { x: number; delay: number; height: number }) {
-  const p = useSharedValue(0);
-  useEffect(() => {
-    p.value = withDelay(delay, withRepeat(withTiming(1, { duration: 4200, easing: Easing.out(Easing.quad) }), -1, false));
-  }, []);
-  const a = useAnimatedStyle(() => ({
-    opacity: interpolate(p.value, [0, 0.15, 0.85, 1], [0, 0.7, 0.5, 0]),
-    transform: [{ translateY: -p.value * (height - 30) }, { translateX: Math.sin(p.value * 10) * 3 }] as Transform,
-  }));
-  return <Animated.View style={[{ position: "absolute", left: x, bottom: 22, width: 5, height: 5, borderRadius: 3, borderWidth: 1, borderColor: "#bae6fd" }, a]} />;
-}
-
-export function TankHero({ type, children, height = 168, framed }: { type: TankType; children?: React.ReactNode; height?: number; framed?: boolean }) {
-  const salt = chemOf(type) === "salt";
-  const [w, setW] = useState(0);
-  const h = height;
-  const rays = useSharedValue(0.5);
-  useEffect(() => { rays.value = withRepeat(withSequence(withTiming(1, { duration: 2600 }), withTiming(0.45, { duration: 2600 })), -1); }, []);
-  const raysStyle = useAnimatedStyle(() => ({ opacity: rays.value }));
-  const fish = salt
-    ? [{ c: "#F97316", top: 52, s: 34, d: 7000, dl: 0 }, { c: "#FACC15", top: 92, s: 26, d: 9000, dl: 900 }, { c: "#CBD5E1", top: 34, s: 22, d: 8000, dl: 1800 }]
-    : [{ c: "#38BDF8", top: 48, s: 22, d: 6000, dl: 0 }, { c: "#38BDF8", top: 62, s: 22, d: 6200, dl: 250 }, { c: "#38BDF8", top: 40, s: 22, d: 6400, dl: 500 }, { c: "#E2E8F0", top: 104, s: 30, d: 9500, dl: 1200 }];
-  return (
-    <View style={[hs.wrap, { height }, framed && { borderRadius: 0 }]} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      <LinearGradient colors={["#0c3a57", "#082a42", "#061f33"]} style={[StyleSheet.absoluteFill]} />
-      <Animated.View style={[StyleSheet.absoluteFill, raysStyle]}>
-        <Svg width="100%" height="100%" viewBox="0 0 400 168" preserveAspectRatio="xMidYMid slice">
-          <Defs>
-            <SvgGrad id="lt" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#7dd3fc" stopOpacity={0.24} />
-              <Stop offset="1" stopColor="#7dd3fc" stopOpacity={0} />
-            </SvgGrad>
-          </Defs>
-          <Path d="M90 0l40 168H70zM210 0l30 168h-50zM320 0l20 168h-40z" fill="url(#lt)" />
-        </Svg>
-      </Animated.View>
-      <Svg width="100%" height="100%" viewBox="0 0 400 168" preserveAspectRatio="xMidYMax slice" style={StyleSheet.absoluteFill}>
-        {salt ? (
-          <>
-            <Path d="M60 160c-4-30 6-48 2-70M62 120c10-12 22-14 26-26M58 130c-10-8-20-10-24-22" stroke="#F472B6" strokeWidth={5} fill="none" strokeLinecap="round" opacity={0.75} />
-            <Ellipse cx={300} cy={148} rx={34} ry={16} fill="#7C3AED" opacity={0.55} />
-            <Circle cx={286} cy={134} r={7} fill="#A78BFA" opacity={0.7} />
-            <Circle cx={306} cy={130} r={6} fill="#A78BFA" opacity={0.7} />
-            <Circle cx={322} cy={138} r={5} fill="#A78BFA" opacity={0.7} />
-            <Path d="M360 160c0-24 8-34 4-52M368 130c8-6 14-12 14-20" stroke="#22D3EE" strokeWidth={4} fill="none" strokeLinecap="round" opacity={0.6} />
-          </>
-        ) : (
-          <>
-            <Path d="M50 162c-6-40 10-70 0-110M58 162c8-30 24-44 18-80M40 162c-12-24-8-48-20-64M340 162c4-40-12-60-4-96M350 162c10-26 24-36 22-62" stroke="#22C55E" strokeWidth={4} fill="none" strokeLinecap="round" opacity={0.6} />
-            <Path d="M280 162c-2-20 4-30 0-46" stroke="#4ADE80" strokeWidth={3} fill="none" strokeLinecap="round" opacity={0.5} />
-          </>
-        )}
-        <Path d="M0 156c60-10 120 6 200-2s140-8 200 2v12H0z" fill="#1d3a4a" />
-      </Svg>
-      {w ? fish.map((f, i) => <SwimFish key={type + i} width={w} top={f.top} color={f.c} size={f.s} duration={f.d} delay={f.dl} />) : null}
-      {w ? [0.22, 0.5, 0.78].map((x, i) => <Bubble key={i} x={w * x} delay={i * 1300} height={h} />) : null}
-      <View style={hs.tags}>{children}</View>
-    </View>
-  );
-}
-const hs = themed(() => StyleSheet.create({
-  wrap: { height: 168, overflow: "hidden", borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg },
-  tags: { position: "absolute", top: 12, left: 12, right: 12, flexDirection: "row", justifyContent: "space-between" },
-}));
 
 /* ---------------- Metric pod with animated gauge ---------------- */
 export function MetricPod({ m, value, type, index = 0 }: { m: Metric; value: number; type: TankType; index?: number }) {

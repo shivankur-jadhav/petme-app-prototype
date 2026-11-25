@@ -1,17 +1,17 @@
 // The customer's tank, drawn as a real aquarium: a hood with a light bar, glass with reflections and a
 // base trim. Inside it plays the customer's own tank video on a silent loop, shows their photo with a
-// slow drift, or falls back to the animated illustration until a video is added.
+// slow drift, or falls back to TankScene (an illustration of their tank and fish) until one is added.
 // The tank is underwater art, so it stays dark in both themes.
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { VideoView, useVideoPlayer } from "expo-video";
-import { TankHero } from "./visuals";
+import { TankScene } from "./TankScene";
 import { Icon } from "./Icon";
 import { Press } from "./ui";
 import { F } from "../theme";
-import { TankMedia, TankType, fmtDate, iso } from "../data";
+import { Critter, SizeId, TankMedia, TankType, fmtDate, iso } from "../data";
 
 const TANK = {
   frame: "#0a1424",
@@ -82,8 +82,8 @@ export const mediaCaption = (m: TankMedia) =>
   `${m.by === "technician" ? "Recorded at your visit" : "Your " + (m.kind === "video" ? "video" : "photo")} · ${fmtDate(iso(new Date(m.addedAt)), false)}`;
 
 export function TankView({
-  type, media, height = 210, tags, footer,
-}: { type: TankType; media?: TankMedia; height?: number; tags?: React.ReactNode; footer?: React.ReactNode }) {
+  type, size, stock, media, height = 210, tags, footer,
+}: { type: TankType; size?: SizeId; stock?: Critter[]; media?: TankMedia; height?: number; tags?: React.ReactNode; footer?: React.ReactNode }) {
   return (
     <View style={s.tank}>
       <View style={s.hood}>
@@ -95,7 +95,7 @@ export function TankView({
         ) : media?.kind === "image" ? (
           <DriftPhoto key={media.uri} uri={media.uri} height={height} />
         ) : (
-          <TankHero type={type} height={height} framed />
+          <TankScene type={type} size={size} stock={stock} height={height} />
         )}
         {/* light falling from the hood, a diagonal reflection on the glass, and the glass edges */}
         <LinearGradient pointerEvents="none" colors={[TANK.glow, TANK.glowFade]} style={[s.fill, { height: height * 0.35 }]} />
