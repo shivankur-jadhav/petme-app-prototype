@@ -1,7 +1,7 @@
 // Real photos of every species in the app, bundled so they show instantly and offline.
 // Source: iNaturalist. Only photos whose licence allows commercial use (CC0, CC BY, CC BY-SA) are
 // used. CC BY and CC BY-SA require crediting the photographer, so keep PhotoCredits visible wherever
-// these photos appear. Cropped to 240 x 240.
+// these photos appear. Cropped to 360 x 360 from the large original, with light camera-style levels and sharpening.
 // Generated from iNaturalist metadata; to swap a photo, replace assets/species/<art>.jpg and its entry.
 
 export type BundledPhoto = { src: number; credit: string; license: string; source: string; taxon: string };
