@@ -41,6 +41,7 @@ The top of the Tanks screen is `TankView` (`src/components/TankView.tsx`): a dra
 - Customers add one from the empty tank itself or from Tanks → "Tank video" (record with the camera or choose from the phone). Technicians can attach one in Pro → "Complete with report"; it is saved on the booking (`Booking.media`) and shows in that visit's report.
 - The tank shows the newest of the customer's own video (`Tank.media`) and any technician video from a finished visit (`latestTankMedia` in `src/media.ts`).
 - Files are copied into the app's document folder (`tank-media/`) with expo-file-system so they survive cache clearing; `forgetMedia` deletes replaced copies.
+- "Record a video" opens the rear camera in video mode (`cameraType: back`, videos only). On the web (browser / artifact) the camera opens through a file input with `capture`, and picked files are kept in the browser's IndexedDB (`src/webMedia.ts`, uri `idb:<key>`, shown via `useMediaUri`) so they survive a reload; show saved media through `useMediaUri` everywhere.
 - Until there is a shared backend, a technician's video only exists on the phone that recorded it. With the backend, upload to storage and save the URL in `media.uri`.
 
 ## Species photos

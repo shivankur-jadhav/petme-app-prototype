@@ -9,6 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { Icon } from "./Icon";
 import { Btn, Press } from "./ui";
+import { useMediaUri } from "../webMedia";
 import { F } from "../theme";
 import { TankMedia, TankType, fmtDate, iso } from "../data";
 
@@ -106,16 +107,17 @@ export const mediaCaption = (m: TankMedia) =>
 export function TankView({
   type, media, height = 210, tags, footer, onAdd, busy,
 }: { type: TankType; media?: TankMedia; height?: number; tags?: React.ReactNode; footer?: React.ReactNode; onAdd?: (source: "camera" | "library") => void; busy?: boolean }) {
+  const uri = useMediaUri(media?.uri); // on the web, saved files are looked up in the browser's storage
   return (
     <View style={s.tank}>
       <View style={s.hood}>
         <LinearGradient colors={[TANK.lightFade, TANK.light, TANK.lightFade]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.lightBar} />
       </View>
       <View style={[s.glass, { height }]}>
-        {media?.kind === "video" ? (
-          <LoopVideo key={media.uri} uri={media.uri} height={height} />
-        ) : media?.kind === "image" ? (
-          <DriftPhoto key={media.uri} uri={media.uri} height={height} />
+        {media?.kind === "video" && uri ? (
+          <LoopVideo key={uri} uri={uri} height={height} />
+        ) : media?.kind === "image" && uri ? (
+          <DriftPhoto key={uri} uri={uri} height={height} />
         ) : (
           <FilmYourTank height={height} onAdd={onAdd} busy={busy} />
         )}

@@ -9,6 +9,7 @@ import { CritterArt, Icon } from "./Icon";
 import { Press, layout } from "./ui";
 import { useSpeciesPhoto } from "../speciesPhoto";
 import { SPECIES_PHOTOS } from "../speciesPhotos";
+import { useMediaUri } from "../webMedia";
 import { ALL_IDEAS, STOCK } from "../data";
 import { FishView, useFishViewer } from "./FishViewer";
 
@@ -39,7 +40,8 @@ function Thumb({ species, own, size = 60, round }: { species: Species; own?: str
   const bundled = SPECIES_PHOTOS[species.art];
   const photo = useSpeciesPhoto(own || bundled ? undefined : species.wiki);
   const [failed, setFailed] = useState<string | null>(null);
-  const uri = own || photo?.uri;
+  const ownUri = useMediaUri(own);
+  const uri = own ? ownUri : photo?.uri;
   return (
     <View style={{ width: size, height: size, borderRadius: round ? size / 2 : 6, overflow: "hidden", backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}>
       {!own && bundled ? (

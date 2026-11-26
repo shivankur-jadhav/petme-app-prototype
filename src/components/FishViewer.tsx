@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R, SPRING, T } from "../theme";
 import { CritterArt, Icon } from "./Icon";
 import { Badge, Press, haptic } from "./ui";
+import { useMediaUri } from "../webMedia";
 import { SPECIES_PHOTOS } from "../speciesPhotos";
 import { SPECIES_INFO } from "../speciesInfo";
 import { useSpeciesPhoto } from "../speciesPhoto";
@@ -136,6 +137,7 @@ function Viewer({ fish, onClose }: { fish: FishView; onClose: () => void }) {
   const box = Math.min(width, height * 0.55);
   const bundled = SPECIES_PHOTOS[fish.art];
   const looked = useSpeciesPhoto(fish.own || bundled ? undefined : fish.wiki);
+  const ownUri = useMediaUri(fish.own);
   const info = SPECIES_INFO[fish.art];
   const [large, setLarge] = useState<string | null>(null);
   const [largeShown, setLargeShown] = useState(false);
@@ -155,7 +157,7 @@ function Viewer({ fish, onClose }: { fish: FishView; onClose: () => void }) {
   const close = onClose;
 
   const credit = fish.own ? null : bundled ? { who: bundled.credit, lic: bundled.license, url: bundled.source, site: "iNaturalist" } : looked ? { who: looked.credit, lic: looked.license, url: looked.source, site: "Wikimedia Commons" } : null;
-  const baseSource = fish.own ? { uri: fish.own } : bundled ? bundled.src : looked ? { uri: looked.uri } : null;
+  const baseSource = fish.own ? (ownUri ? { uri: ownUri } : null) : bundled ? bundled.src : looked ? { uri: looked.uri } : null;
   const careTone = info?.care === "Easy" ? "ok" : info?.care === "Moderate" ? "warn" : "crit";
 
   return (
