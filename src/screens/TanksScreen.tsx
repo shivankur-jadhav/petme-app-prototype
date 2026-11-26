@@ -121,6 +121,8 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
       <Animated.View key={tank.id} entering={enter(0)} layout={layout} style={[st.panel, { padding: 0, gap: 0, overflow: "hidden", backgroundColor: C.sLow }]}>
         <TankView
           type={tank.type}
+          size={tank.size}
+          stock={stock}
           onAdd={addMedia}
           busy={busy}
           media={media}

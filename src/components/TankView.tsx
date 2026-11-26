@@ -1,6 +1,7 @@
 // The customer's tank, drawn as a real aquarium: a hood with a light bar, glass with reflections and a
 // base trim. Inside it plays the customer's own tank video on a silent loop, shows their photo with a
-// slow drift. Over either, and in the empty tank too, gentle water life: light sweeping through the water, the hood light
+// slow drift. Without either, a drawing of their own tank and livestock (TankScene) with a small
+// "Record a video" bar. Over all of these, gentle water life: light sweeping through the water, the hood light
 // breathing, and a few bubbles rising up the glass. Until one is added, the empty tank asks the
 // customer to film theirs.
 // The tank is underwater art, so it stays dark in both themes.
@@ -16,7 +17,8 @@ import { Icon } from "./Icon";
 import { Btn, Press } from "./ui";
 import { useMediaUri } from "../webMedia";
 import { F } from "../theme";
-import { TankMedia, TankType, fmtDate, iso } from "../data";
+import { Critter, SizeId, TankMedia, TankType, fmtDate, iso } from "../data";
+import { TankScene } from "./TankScene";
 
 const TANK = {
   frame: "#0a1424",
@@ -35,6 +37,8 @@ const TANK = {
   pillSub: "rgba(226,242,255,0.75)",
   water: ["#0f3a5c", "#0a2a45", "#071d33"] as const,
   sweep: "rgba(224,242,254,0.13)",
+  film: "rgba(0,210,211,0.92)",
+  filmText: "#061426",
   sweep2: "rgba(186,230,253,0.09)",
   surface: "rgba(224,242,254,0.35)",
   speck: "rgba(224,242,254,0.9)",
@@ -169,22 +173,21 @@ function DriftPhoto({ uri, height }: { uri: string; height: number }) {
   return <Animated.Image entering={FadeIn.duration(500)} source={{ uri }} resizeMode="cover" style={[{ width: "100%", height }, a]} />;
 }
 
-/** The tank before the customer has filmed it: an invitation to record, right inside the glass. */
-function FilmYourTank({ height, onAdd, busy }: { height: number; onAdd?: (source: "camera" | "library") => void; busy?: boolean }) {
+/**
+ * The tank before the customer has filmed it: a drawing of their own tank (scenery for its type,
+ * their livestock swimming), the water life on top, and a small "Film your tank" pill in the
+ * top-right corner (open water, so it never covers the animals resting on the bottom).
+ */
+function DrawnTank({ type, size, stock, height, onAdd, busy }: { type: TankType; size?: SizeId; stock?: Critter[]; height: number; onAdd?: (source: "camera" | "library") => void; busy?: boolean }) {
   return (
-    <View style={[s.empty, { height }]}>
-      <LinearGradient colors={TANK.water} style={StyleSheet.absoluteFill} />
+    <View style={{ height }}>
+      <TankScene type={type} size={size} stock={stock} height={height} />
       <WaterLife height={height} />
-      <View style={s.emptyIcon}><Icon name="video" size={20} color={TANK.pillText} width={1.8} /></View>
-      <Text style={s.emptyTitle}>Film your tank</Text>
-      <Text style={s.emptyText}>Your video plays here on a silent loop.</Text>
       {onAdd ? (
-        <>
-          <View style={{ marginTop: 6 }}><Btn small label="Record a video" icon="camera" disabled={busy} onPress={() => onAdd("camera")} /></View>
-          <Press onPress={() => onAdd("library")} disabled={busy} accessibilityRole="button" accessibilityLabel="Choose a video from my phone" style={{ paddingVertical: 4 }}>
-            <Text style={s.emptyLink}>or choose from my phone</Text>
-          </Press>
-        </>
+        <Press onPress={() => onAdd("camera")} disabled={busy} accessibilityRole="button" accessibilityLabel="Record a video of your tank" style={s.filmPill}>
+          <Icon name="camera" size={15} color={TANK.filmText} width={2} />
+          <Text style={s.filmText}>Film your tank</Text>
+        </Press>
       ) : null}
     </View>
   );
@@ -204,8 +207,8 @@ export const mediaCaption = (m: TankMedia) =>
   `${m.by === "technician" ? "Recorded at your visit" : "Your " + (m.kind === "video" ? "video" : "photo")} · ${fmtDate(iso(new Date(m.addedAt)), false)}`;
 
 export function TankView({
-  type, media, height = 210, tags, footer, onAdd, busy,
-}: { type: TankType; media?: TankMedia; height?: number; tags?: React.ReactNode; footer?: React.ReactNode; onAdd?: (source: "camera" | "library") => void; busy?: boolean }) {
+  type, size, stock, media, height = 210, tags, footer, onAdd, busy,
+}: { type: TankType; size?: SizeId; stock?: Critter[]; media?: TankMedia; height?: number; tags?: React.ReactNode; footer?: React.ReactNode; onAdd?: (source: "camera" | "library") => void; busy?: boolean }) {
   const uri = useMediaUri(media?.uri); // on the web, saved files are looked up in the browser's storage
   return (
     <View style={s.tank}>
@@ -218,14 +221,14 @@ export function TankView({
         ) : media?.kind === "image" && uri ? (
           <DriftPhoto key={uri} uri={uri} height={height} />
         ) : (
-          <FilmYourTank height={height} onAdd={onAdd} busy={busy} />
+          <DrawnTank type={type} size={size} stock={stock} height={height} onAdd={onAdd} busy={busy} />
         )}
         {/* light falling from the hood (alive when there is a video or photo), a diagonal reflection on the glass, and the glass edges */}
         {media && uri ? <WaterLife height={height} /> : null}
         <LinearGradient pointerEvents="none" colors={[TANK.shineFade, TANK.shine, TANK.shineFade]} locations={[0.3, 0.45, 0.6]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.fill} />
         {media ? <LinearGradient pointerEvents="none" colors={[TANK.shade, TANK.shadeFade]} style={[s.fill, { height: 64 }]} /> : null}
         <View pointerEvents="none" style={s.edges} />
-        {tags ? <View pointerEvents="box-none" style={s.tags}>{tags}</View> : null}
+        {tags ? <View pointerEvents="box-none" style={[s.tags, !(media && uri) && s.tagsLeft]}>{tags}</View> : null}
         {footer ? <View pointerEvents="box-none" style={s.footer}>{footer}</View> : null}
       </View>
       <View style={s.trim} />
@@ -245,9 +248,7 @@ const s = StyleSheet.create({
   footer: { position: "absolute", left: 10, bottom: 10, right: 120 },
   pill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", backgroundColor: TANK.pill, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   pillText: { fontFamily: F.body500, fontSize: 12, color: TANK.pillText, flexShrink: 1 },
-  empty: { alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 24, paddingTop: 18 },
-  emptyIcon: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: TANK.ring, alignItems: "center", justifyContent: "center", marginBottom: 2 },
-  emptyTitle: { fontFamily: F.head600, fontSize: 18, color: TANK.pillText },
-  emptyText: { fontFamily: F.body, fontSize: 13, lineHeight: 18, color: TANK.pillSub, textAlign: "center", maxWidth: 280 },
-  emptyLink: { fontFamily: F.body500, fontSize: 13, color: TANK.pillText, textDecorationLine: "underline" },
+  tagsLeft: { justifyContent: "flex-start", right: 150 },
+  filmPill: { position: "absolute", top: 8, right: 10, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: TANK.film, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  filmText: { fontFamily: F.body600, fontSize: 13, color: TANK.filmText },
 });
