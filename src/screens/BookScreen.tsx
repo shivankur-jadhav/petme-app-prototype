@@ -12,7 +12,7 @@ import {
 } from "../data";
 
 export default function BookScreen({ showSheet, closeSheet, openReport }: { showSheet: (n: React.ReactNode) => void; closeSheet: () => void; openReport: (id: string) => void }) {
-  const { tank, setTank, wish, clearWish, addBooking, profile, setProfile, setProfileOpen } = useStore();
+  const { tank, tanks, selectTank, wish, clearWish, addBooking, profile, setProfile, setProfileOpen } = useStore();
   const hasProfile = !!(profile.name.trim() && profile.phone.trim() && profile.street.trim());
   const [service, setService] = useState<ServiceId>("clean");
   const [recur, setRecur] = useState<RecurId>("w4");
@@ -52,7 +52,7 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
     if (!det.address.trim()) return fail("Add the address for the visit.");
     setErr("");
     const b = makeBooking(
-      { service, type: tank.type, size: tank.size, recur, city, date, win, tankName: tank.name },
+      { service, type: tank.type, size: tank.size, recur, city, date, win, tankName: tank.name, tankId: tank.id },
       {
         name: det.name.trim(), phone: det.phone.trim(), address: det.address.trim(), sms, wishlist: wishItems.map((i) => i!.name),
         notes: [notes.trim(), useProfile && profile.access ? `Access: ${profile.access}` : "", away ? "(Customer may not be home.)" : ""].filter(Boolean).join(" "),
@@ -99,8 +99,8 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
               <Text style={T.small}>{by(TYPES, tank.type)!.name} · {by(SIZES, tank.size)!.name} gal</Text>
             </View>
           </View>
-          <Segmented items={TYPES.map((t) => ({ id: t.id, label: t.short }))} value={tank.type} onChange={(id: TankType) => setTank({ ...tank, type: id })} />
-          <Segmented items={SIZES.map((s) => ({ id: s.id, label: s.short, sub: "gal" }))} value={tank.size} onChange={(id: SizeId) => setTank({ ...tank, size: id })} />
+          {tanks.length > 1 ? <Chips items={tanks.map((t) => ({ id: t.id, label: t.name }))} value={tank.id} onChange={(id) => selectTank(id)} /> : null}
+          <Text style={T.small}>To change the water type or size, edit the tank on the Tanks tab.</Text>
         </Panel>
 
         <Panel index={2}>

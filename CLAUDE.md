@@ -59,11 +59,12 @@ Current livestock and the Livestock tab suggestions show real photos (`SpeciesTh
 Tapping a fish photo (Current livestock rows, Livestock tab cards, fish chips on bookings) opens `FishViewer` (`src/components/FishViewer.tsx`, provider wraps the shell in `App.tsx`; open it with `useFishViewer()`, or pass `zoom` to `SpeciesThumb`). Full-screen photo with pinch, double-tap and drag to zoom (PanResponder + Reanimated, no extra native package), swipe down or × to close. It shows the bundled large photo (`SPECIES_PHOTOS[art].large`) at once, offline and in the browser link; `src/zoomPhoto.ts` downloads a large version only for a species without one. Below the photo: name, scientific name, care level, adult size, origin and a plain description from `src/speciesInfo.ts` (keyed by `art`; every species needs an entry), plus the photo credit.
 
 ## Data model
+Customers can have several tanks: `tanks` + the active `tank` in the store (`selectTank`, `addTank`, `removeTank`; `setTank` updates the active one). The Tanks screen opens with a "Your tanks" row (tap to switch, "Add tank"); everything on Tanks, Livestock and Book follows the active tank. Bookings carry `tankId` (older ones match by `tankName`, see `forTank`). Water type and size are changed only in Tanks → Edit tank, never from Book.
 `Booking` in `src/data.ts` is the core record: service, tank type/size, city + estimated km from the base, date + window, contact, price breakdown, status (`new → confirmed → done`, or `cancelled`), and on completion `results` (water readings) + `techNotes`. Pricing is `quote()`; margins are `econ()`. Travel is charged by distance from the base at Bramalea City Centre (`BASE`, `roadKm()`, `travelFee()` in `data.ts`) and is folded into the service price, never shown as its own line. All numbers are starter assumptions.
 
 ## Known gaps / roadmap
 1. Shared backend (Supabase suggested: Postgres + auth + realtime) so customers and technicians see the same bookings; split technician screens behind a role.
-2. Phone-number sign-in (OTP), multiple saved addresses, multiple tanks per customer. (One profile with one address is saved on the phone today: `Profile` in `src/data.ts`, opened from the header avatar.)
+2. Phone-number sign-in (OTP), multiple saved addresses. (One profile with one address is saved on the phone today: `Profile` in `src/data.ts`, opened from the header avatar.)
 3. Payments after the visit (Stripe), plan billing.
 4. Push notifications: booking confirmed, tech 15 minutes away, report ready.
 5. Real livestock records per tank, editable by the technician.

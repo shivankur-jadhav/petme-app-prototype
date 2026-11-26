@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import { C, T } from "../theme";
+import { A, C, F, R, T } from "../theme";
 import { Icon } from "../components/Icon";
 import { PhotoCredits, SpeciesThumb } from "../components/SpeciesThumb";
 import { Badge, Btn, Chips, Field, Label, Panel, Press, Screen, SecHeader, Segmented, enter, haptic, layout, st } from "../components/ui";
@@ -9,10 +9,13 @@ import { TankPill, TankView, mediaCaption } from "../components/TankView";
 import { forgetMedia, latestTankMedia, pickTankMedia } from "../media";
 import { MetricGrid, TabId } from "../components/visuals";
 import { useStore } from "../store";
-import { RECUR, SAMPLE_READINGS, SERVICES, SIZES, STOCK, TYPES, WINDOWS, by, chemOf, fmtDate, iso, metricsFor, money, todayIso, SizeId, TankType } from "../data";
+import { RECUR, SAMPLE_READINGS, SERVICES, SIZES, STOCK, TYPES, WINDOWS, by, chemOf, fmtDate, iso, metricsFor, money, todayIso, forTank, SizeId, Tank, TankType } from "../data";
 
 export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void; openReport: (id: string) => void }) {
-  const { tank, setTank, bookings, toast } = useStore();
+  const { tank, tanks, setTank, selectTank, addTank, removeTank, bookings, toast } = useStore();
+  const mine = useMemo(() => bookings.filter((b) => forTank(b, tank)), [bookings, tank.id, tank.name]);
+  const switchTo = (t: Tank) => { if (t.id === tank.id) return; haptic.tap(); selectTank(t.id); setEditing(false); setVideoPanel(false); setPhotoFor(null); setFilter("all"); };
+  const newTank = () => { const t = addTank(); setDraft(t); setEditing(true); setVideoPanel(false); haptic.soft(); };
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(tank);
   const [filter, setFilter] = useState<"all" | "fish" | "inv">("all");
@@ -50,7 +53,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
 
   // The tank shown at the top: the newest of the customer's own video and any video a technician
   // attached when finishing a visit. Without either, the animated illustration stands in.
-  const media = useMemo(() => latestTankMedia(tank.media, bookings.filter((b) => b.status === "done").map((b) => b.media)), [tank.media, bookings]);
+  const media = useMemo(() => latestTankMedia(tank.media, mine.filter((b) => b.status === "done").map((b) => b.media)), [tank.media, mine]);
 
   const addMedia = async (source: "camera" | "library") => {
     setBusy(true);
@@ -70,9 +73,9 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
     }
   };
 
-  const report = useMemo(() => bookings.filter((b) => b.status === "done" && b.results && Object.keys(b.results).length)
-    .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0))[0], [bookings]);
-  const next = useMemo(() => { const t = todayIso(); return bookings.filter((b) => (b.status === "new" || b.status === "confirmed") && b.date >= t).sort((a, b) => (a.date < b.date ? -1 : 1))[0]; }, [bookings]);
+  const report = useMemo(() => mine.filter((b) => b.status === "done" && b.results && Object.keys(b.results).length)
+    .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0))[0], [mine]);
+  const next = useMemo(() => { const t = todayIso(); return mine.filter((b) => (b.status === "new" || b.status === "confirmed") && b.date >= t).sort((a, b) => (a.date < b.date ? -1 : 1))[0]; }, [mine]);
 
   const type = by(TYPES, tank.type)!;
   const size = by(SIZES, tank.size)!;
@@ -84,7 +87,35 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
 
   return (
     <Screen>
-      <Animated.View entering={enter(0)} layout={layout} style={[st.panel, { padding: 0, gap: 0, overflow: "hidden", backgroundColor: C.sLow }]}>
+      {/* Your tanks: tap one to switch; everything below follows the chosen tank */}
+      <Animated.View entering={enter(0)} style={{ gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Label>{tanks.length > 1 ? `Your tanks · ${tanks.length}` : "Your tank"}</Label>
+          <Press onPress={newTank} accessibilityLabel="Add a tank" style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 4 }}>
+            <Icon name="plus" size={16} color={C.primary} width={2} />
+            <Text style={{ fontFamily: F.body600, fontSize: A.big ? 16 : 14, color: C.primary }}>Add tank</Text>
+          </Press>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
+          {tanks.map((t) => {
+            const on = t.id === tank.id;
+            return (
+              <Press key={t.id} onPress={() => switchTo(t)} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${t.name}, ${by(TYPES, t.type)!.name}`}
+                style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: A.big ? 14 : 10, paddingHorizontal: 12, minWidth: 150, borderRadius: R.lg, borderWidth: 1, borderColor: on ? C.primary : C.line, backgroundColor: on ? C.sel : C.glass }}>
+                <View style={{ width: 32, height: 32, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: on ? C.primaryTint : C.sHigh }}>
+                  <Icon name="tank" size={18} color={on ? C.primary : C.muted} />
+                </View>
+                <View>
+                  <Text style={[T.h3, { fontSize: 14, lineHeight: 18 }]} numberOfLines={1}>{t.name}</Text>
+                  <Text style={[T.small, { fontSize: 11 }]}>{by(TYPES, t.type)!.short} · {by(SIZES, t.size)!.short} gal</Text>
+                </View>
+              </Press>
+            );
+          })}
+        </ScrollView>
+      </Animated.View>
+
+      <Animated.View key={tank.id} entering={enter(0)} layout={layout} style={[st.panel, { padding: 0, gap: 0, overflow: "hidden", backgroundColor: C.sLow }]}>
         <TankView
           type={tank.type}
           onAdd={addMedia}
@@ -135,6 +166,13 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
           <Label>Size (gallons)</Label>
           <Segmented items={SIZES.map((s) => ({ id: s.id, label: s.short }))} value={draft.size} onChange={(id: SizeId) => setDraft({ ...draft, size: id })} />
           <Btn label="Save tank" onPress={() => { setTank({ ...draft, name: draft.name.trim() || "My tank", sample: false }); setEditing(false); toast("Tank saved."); }} />
+          {tanks.length > 1 ? (
+            <Btn label="Remove this tank" icon="trash" kind="danger" confirm={`Tap again to remove ${tank.name}`} onPress={() => {
+              forgetMedia(tank.media);
+              Object.values(tank.fishPhotos || {}).forEach((m) => forgetMedia(m));
+              removeTank(tank.id); setEditing(false); toast(`${tank.name} removed.`);
+            }} />
+          ) : null}
         </Animated.View>
       ) : null}
 

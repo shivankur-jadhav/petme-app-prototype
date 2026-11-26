@@ -10,7 +10,9 @@ export type Status = "new" | "confirmed" | "done" | "cancelled";
 export type TankMedia = { uri: string; kind: "video" | "image"; addedAt: number; by: "customer" | "technician"; ref?: string };
 
 /** `fishPhotos`: photos of the customer's own fish, keyed by species name; they replace the stock photo. */
-export type Tank = { name: string; type: TankType; size: SizeId; sample: boolean; media?: TankMedia; fishPhotos?: Record<string, TankMedia> };
+export type Tank = { id: string; name: string; type: TankType; size: SizeId; sample: boolean; media?: TankMedia; fishPhotos?: Record<string, TankMedia> };
+/** Does this booking belong to this tank? Older bookings have no tankId, so they match by name. */
+export const forTank = (b: { tankId?: string; tankName?: string }, t: Tank) => (b.tankId ? b.tankId === t.id : (b.tankName || "") === t.name);
 
 /** The customer's own details, saved on the phone and used to fill in bookings. */
 export type Profile = {
@@ -33,6 +35,7 @@ export type Booking = {
   type: TankType;
   size: SizeId;
   tankName: string;
+  tankId?: string; // which of the customer's tanks (missing on bookings saved before multiple tanks)
   city: string;
   zone?: string; // only on bookings saved before distance pricing
   km?: number; // estimated one-way km from the base
@@ -312,14 +315,14 @@ export function dateOptions(service: ServiceId) {
 }
 
 export function makeBooking(
-  s: { service: ServiceId; type: TankType; size: SizeId; recur: RecurId; city: string; date: string; win: string; tankName?: string },
+  s: { service: ServiceId; type: TankType; size: SizeId; recur: RecurId; city: string; date: string; win: string; tankName?: string; tankId?: string },
   contact: { name: string; phone: string; address?: string; notes?: string; sms?: boolean; wishlist?: string[] },
   extra: Partial<Booking> = {}
 ): Booking {
   const q = quote(s);
   return {
     id: newId(), ref: newRef(),
-    service: s.service, type: s.type, size: s.size, tankName: s.tankName || "", city: s.city, km: q.km,
+    service: s.service, type: s.type, size: s.size, tankName: s.tankName || "", tankId: s.tankId, city: s.city, km: q.km,
     recur: s.service === "clean" ? s.recur : "once", date: s.date, win: s.win,
     name: contact.name, phone: contact.phone, address: contact.address || "", notes: contact.notes || "", sms: !!contact.sms, wishlist: contact.wishlist || [],
     base: q.base, discAmt: q.discAmt, travel: q.travel, subtotal: q.subtotal, tax: q.tax, total: q.total, monthly: q.monthly,
