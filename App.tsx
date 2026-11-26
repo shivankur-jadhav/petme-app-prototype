@@ -8,7 +8,6 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-goog
 import { C, applyTheme } from "./src/theme";
 import { StoreProvider, useStore } from "./src/store";
 import { FishViewerProvider } from "./src/components/FishViewer";
-import { CursorFx } from "./src/components/CursorFx";
 import { TabBar, TabId, Sheet } from "./src/components/visuals";
 import { Toast } from "./src/components/ui";
 import TanksScreen from "./src/screens/TanksScreen";
@@ -65,7 +64,6 @@ function Shell() {
       <TabBar value={tab} onChange={go} badges={{ pro: open || undefined, livestock: wish.length || undefined }} />
       <Sheet open={!!sheet} onClose={closeSheet}>{sheet}</Sheet>
       <Toast />
-      <CursorFx />
     </View>
   );
 }
