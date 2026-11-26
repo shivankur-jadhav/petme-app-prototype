@@ -3,8 +3,9 @@
 // and the customer's own livestock drawn with the species art, swimming and resting where each
 // species lives. The water itself (surface ripple, light, bubbles, specks) is TankView's WaterLife.
 // Underwater art, so it stays the same in light and dark themes (colours are artwork, not UI tokens).
-// Motion budget: at most 4 swimming fish, a handful of swaying plant clumps; resting species
-// (gobies on sand, plecos, shrimp, snails) are placed still.
+// Motion budget: at most 4 swimming fish (each on one looping value that also drives its turn,
+// tail beat and tilt), a handful of swaying plant clumps, and one shared clock for every resting
+// animal's idle motion (gobies hop, plecos breathe, shrimp rock).
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
@@ -27,40 +28,56 @@ type Place = Swim | Rest;
 const PLACES: Record<string, Place[]> = {
   // Reef
   clown: [
-    { mode: "swim", x0: 252, x1: 340, y: 118, size: 30, dur: 3400 },
-    { mode: "swim", x0: 262, x1: 336, y: 132, size: 26, dur: 4100, delay: 700, bob: 3 },
+    { mode: "swim", x0: 246, x1: 352, y: 116, size: 44, dur: 3600 },
+    { mode: "swim", x0: 256, x1: 346, y: 134, size: 38, dur: 4300, delay: 700, bob: 3 },
   ],
-  cardinal: [{ mode: "swim", x0: 110, x1: 226, y: 84, size: 28, dur: 6200, delay: 400, bob: 2, meander: -12 }],
-  goby: [{ mode: "rest", x: 238, y: 194, size: 30 }],
-  cleaner: [{ mode: "rest", x: 68, y: 168, size: 28, flip: true }],
-  turbo: [{ mode: "rest", x: 112, y: 140, size: 18 }],
+  cardinal: [{ mode: "swim", x0: 96, x1: 240, y: 82, size: 40, dur: 6600, delay: 400, bob: 2, meander: -12 }],
+  goby: [{ mode: "rest", x: 238, y: 196, size: 42 }],
+  cleaner: [{ mode: "rest", x: 70, y: 170, size: 40, flip: true }],
+  turbo: [{ mode: "rest", x: 112, y: 142, size: 26 }],
   // Freshwater and planted
   neon: [
-    { mode: "swim", x0: 20, x1: 380, y: 74, size: 19, dur: 7600, meander: 26 },
-    { mode: "swim", x0: 30, x1: 390, y: 82, size: 18, dur: 7600, delay: 140, meander: 26 },
-    { mode: "swim", x0: 12, x1: 372, y: 88, size: 18, dur: 7600, delay: 280, meander: 26 },
+    { mode: "swim", x0: 14, x1: 386, y: 72, size: 28, dur: 8200, meander: 26 },
+    { mode: "swim", x0: 26, x1: 394, y: 84, size: 27, dur: 8200, delay: 160, meander: 26 },
+    { mode: "swim", x0: 6, x1: 378, y: 92, size: 26, dur: 8200, delay: 320, meander: 26 },
   ],
-  panda: [{ mode: "swim", x0: 120, x1: 350, y: 182, size: 24, dur: 9800, delay: 900, bob: 1.5 }],
-  pleco: [{ mode: "rest", x: 262, y: 198, size: 36, flip: true }],
-  amano: [{ mode: "rest", x: 300, y: 194, size: 20 }],
-  nerite: [{ mode: "rest", x: 356, y: 196, size: 17 }],
+  panda: [{ mode: "swim", x0: 110, x1: 356, y: 180, size: 34, dur: 10400, delay: 900, bob: 1.5 }],
+  pleco: [{ mode: "rest", x: 256, y: 200, size: 52, flip: true }],
+  amano: [{ mode: "rest", x: 306, y: 197, size: 30 }],
+  nerite: [{ mode: "rest", x: 360, y: 199, size: 24 }],
 };
 const MAX_SWIMMERS = 4;
 
+/**
+ * A swimming fish. One looping value drives everything, so there is no extra animation loop:
+ * eased back-and-forth travel, a smooth turn at each end (the body narrows as it turns instead
+ * of snapping round), a quick tail-beat wiggle, gentle bobbing and meandering, and the body tilting
+ * nose-up when rising and nose-down when diving.
+ */
 function Swimmer({ art, x0, x1, y, size, dur, delay = 0, bob = 4, meander = 0 }: { art: string; x0: number; x1: number; y: number; size: number; dur: number; delay?: number; bob?: number; meander?: number }) {
-  const p = useSharedValue(0);
+  // Starts just past the turn so the fish is visible (not mid-turn) while waiting for its delay.
+  const p = useSharedValue(0.06);
   useEffect(() => {
-    p.value = withDelay(delay, withRepeat(withTiming(2, { duration: dur * 2, easing: Easing.linear }), -1, false));
+    p.value = withDelay(delay, withRepeat(withTiming(2.06, { duration: dur * 2, easing: Easing.linear }), -1, false));
   }, [dur, delay]);
   const range = Math.max(0, x1 - x0 - size);
+  const beats = dur / 170; // tail beats per half lap
   const a = useAnimatedStyle(() => {
-    const t = p.value < 1 ? p.value : 2 - p.value;
+    const u = p.value % 2;
+    const t = u < 1 ? u : 2 - u;
     const eased = 0.5 - 0.5 * Math.cos(Math.PI * t);
+    const facing = Math.max(-1, Math.min(1, Math.sin(Math.PI * u) * 4)); // +1 swimming right, -1 left, through 0 while turning
+    const speed = Math.sin(Math.PI * t); // fastest mid-tank, slowest at the turns
+    const dy = 3 * bob * Math.cos(Math.PI * 3 * u) + meander * Math.cos(Math.PI * u); // vertical velocity
+    const tilt = Math.max(-14, Math.min(14, dy * 0.7)) * (facing >= 0 ? 1 : -1);
+    const wag = Math.sin(u * Math.PI * beats) * (1.2 + 2.2 * speed);
     return {
       transform: [
         { translateX: x0 + eased * range },
-        { translateY: Math.sin(p.value * Math.PI * 3) * bob + Math.sin(p.value * Math.PI) * meander },
-        { scaleX: p.value < 1 ? -1 : 1 }, // the art faces left; flip while swimming right
+        { translateY: Math.sin(u * Math.PI * 3) * bob + Math.sin(u * Math.PI) * meander },
+        { rotate: `${tilt + wag}deg` },
+        { scaleX: -facing }, // the art faces left
+        { scaleY: 1 + 0.03 * Math.cos(u * Math.PI * beats) },
       ] as Transform,
     };
   });
@@ -68,6 +85,41 @@ function Swimmer({ art, x0, x1, y, size, dur, delay = 0, bob = 4, meander = 0 }:
     <Animated.View style={[{ position: "absolute", left: 0, top: y - (size * 32) / 48 / 2 }, a]}>
       <CritterArt art={art} width={size} />
     </Animated.View>
+  );
+}
+
+/** How each resting species idles: gobies hop a little, plecos breathe, shrimp rock, snails barely move. */
+const IDLE: Record<string, { bob: number; breathe: number; rock: number }> = {
+  goby: { bob: 1.6, breathe: 0.03, rock: 2 },
+  pleco: { bob: 0.4, breathe: 0.035, rock: 0.6 },
+  cleaner: { bob: 0.8, breathe: 0.02, rock: 4 },
+  amano: { bob: 0.8, breathe: 0.02, rock: 3 },
+  turbo: { bob: 0.3, breathe: 0.015, rock: 0.8 },
+  nerite: { bob: 0.3, breathe: 0.015, rock: 0.8 },
+};
+
+/** A resting animal, idling on one clock shared by all resting animals (each at its own phase). */
+function Rester({ art, x, y, size, flip, clock, phase, ground }: { art: string; x: number; y: number; size: number; flip?: boolean; clock: { value: number }; phase: number; ground: boolean }) {
+  const m = IDLE[art] || { bob: 0.5, breathe: 0.02, rock: 1 };
+  const h = (size * 32) / 48;
+  const a = useAnimatedStyle(() => {
+    const c = clock.value + phase;
+    return {
+      transform: [
+        { translateY: -Math.max(0, Math.sin(c)) * m.bob },
+        { rotate: `${Math.sin(c * 0.7) * m.rock}deg` },
+        { scaleX: flip ? -1 : 1 },
+        { scaleY: 1 + Math.sin(c * 1.9) * m.breathe },
+      ] as Transform,
+    };
+  });
+  return (
+    <>
+      {ground ? <View pointerEvents="none" style={{ position: "absolute", left: x - size * 0.36, top: y - 2, width: size * 0.72, height: 4, borderRadius: size, backgroundColor: "rgba(4,14,26,0.16)" }} /> : null}
+      <Animated.View pointerEvents="none" style={[{ position: "absolute", left: x - size / 2, top: y - h, transformOrigin: "50% 100%" } as any, a]}>
+        <CritterArt art={art} width={size} />
+      </Animated.View>
+    </>
   );
 }
 
@@ -267,6 +319,9 @@ export function TankScene({ type, size = "m", stock, height = 210 }: { type: Tan
   const py = (y: number) => offY + y * sc;
   const k = SIZE_K[size] * sc;
   const layers = useMemo(() => (salt ? reefLayers() : freshLayers(look === "planted")), [salt, look]);
+  // one clock for every resting animal's idle motion
+  const clock = useSharedValue(0);
+  useEffect(() => { clock.value = withRepeat(withTiming(Math.PI * 2 * 10, { duration: 34000, easing: Easing.linear }), -1, false); }, []);
 
   // Lay out each animal from its species' places, keeping the swimming count inside the budget.
   let swimmers = 0;
@@ -297,12 +352,7 @@ export function TankScene({ type, size = "m", stock, height = 210 }: { type: Tan
       {w ? placed.map(({ art, p, key }) => p.mode === "swim" ? (
         <Swimmer key={key} art={art} x0={px(p.x0)} x1={px(p.x1)} y={py(p.y)} size={p.size * k} dur={p.dur} delay={p.delay} bob={p.bob} meander={(p.meander || 0) * sc} />
       ) : (
-        <View key={key} pointerEvents="none" style={{
-          position: "absolute", left: px(p.x) - (p.size * k) / 2, top: py(p.y) - (p.size * k * 32) / 48,
-          transform: [{ scaleX: p.flip ? -1 : 1 }, { rotate: `${p.rot || 0}deg` }],
-        }}>
-          <CritterArt art={art} width={p.size * k} />
-        </View>
+        <Rester key={key} art={art} x={px(p.x)} y={py(p.y)} size={p.size * k} flip={p.flip} clock={clock} phase={key.length * 1.7 + p.x * 0.05} ground={p.y >= 188} />
       )) : null}
     </View>
   );
