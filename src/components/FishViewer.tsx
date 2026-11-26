@@ -145,7 +145,7 @@ function Viewer({ fish, onClose }: { fish: FishView; onClose: () => void }) {
   const fade = useSharedValue(1);
 
   useEffect(() => {
-    if (fish.own || !bundled) return;
+    if (fish.own || !bundled || bundled.large) return; // the sharp version ships with the app
     let live = true;
     largePhotoUrl(bundled.source).then((u) => { if (live) setLarge(u); });
     return () => { live = false; };
@@ -157,7 +157,7 @@ function Viewer({ fish, onClose }: { fish: FishView; onClose: () => void }) {
   const close = onClose;
 
   const credit = fish.own ? null : bundled ? { who: bundled.credit, lic: bundled.license, url: bundled.source, site: "iNaturalist" } : looked ? { who: looked.credit, lic: looked.license, url: looked.source, site: "Wikimedia Commons" } : null;
-  const baseSource = fish.own ? (ownUri ? { uri: ownUri } : null) : bundled ? bundled.src : looked ? { uri: looked.uri } : null;
+  const baseSource = fish.own ? (ownUri ? { uri: ownUri } : null) : bundled ? bundled.large || bundled.src : looked ? { uri: looked.uri } : null;
   const careTone = info?.care === "Easy" ? "ok" : info?.care === "Moderate" ? "warn" : "crit";
 
   return (
