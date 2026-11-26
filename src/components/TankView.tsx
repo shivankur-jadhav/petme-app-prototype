@@ -1,10 +1,14 @@
 // The customer's tank, drawn as a real aquarium: a hood with a light bar, glass with reflections and a
 // base trim. Inside it plays the customer's own tank video on a silent loop, shows their photo with a
-// slow drift. Until one is added, the empty tank asks the customer to film theirs.
+// slow drift. Over either, gentle water life: light sweeping through the water, the hood light
+// breathing, and a few bubbles rising up the glass. Until one is added, the empty tank asks the
+// customer to film theirs.
 // The tank is underwater art, so it stays dark in both themes.
-import React, { useEffect, useRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import React, { useEffect, useRef, useState } from "react";
+import { Image, StyleSheet, Text, View, ViewStyle } from "react-native";
+import Animated, { Easing, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
+
+type Transform = NonNullable<ViewStyle["transform"]>;
 import { LinearGradient } from "expo-linear-gradient";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { Icon } from "./Icon";
@@ -29,8 +33,63 @@ const TANK = {
   pillText: "#E2F2FF",
   pillSub: "rgba(226,242,255,0.75)",
   water: ["#0f3a5c", "#0a2a45", "#071d33"] as const,
+  sweep: "rgba(224,242,254,0.13)",
+  bubble: "rgba(224,242,254,0.75)",
+  bubbleFill: "rgba(224,242,254,0.12)",
   ring: "rgba(186,230,253,0.35)",
 };
+
+/** Water life over the customer's video or photo: one light sweep, a breathing glow, three bubbles. */
+function WaterLife({ height }: { height: number }) {
+  const [w, setW] = useState(0);
+  const sweep = useSharedValue(0);
+  const glow = useSharedValue(0.6);
+  useEffect(() => {
+    sweep.value = withRepeat(withTiming(1, { duration: 9000, easing: Easing.inOut(Easing.sin) }), -1, true);
+    glow.value = withRepeat(withSequence(withTiming(1, { duration: 2800 }), withTiming(0.55, { duration: 2800 })), -1);
+  }, []);
+  const band = useAnimatedStyle(() => ({ transform: [{ translateX: -w * 0.6 + sweep.value * w * 1.2 }, { rotate: "18deg" }] as Transform }));
+  const top = useAnimatedStyle(() => ({ opacity: glow.value }));
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      <Animated.View style={[{ position: "absolute", left: 0, right: 0, top: 0, height: height * 0.4 }, top]}>
+        <LinearGradient colors={[TANK.glow, TANK.glowFade]} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+      {w ? (
+        <Animated.View style={[{ position: "absolute", top: -height * 0.3, width: w * 0.35, height: height * 1.6 }, band]}>
+          <LinearGradient colors={[TANK.shineFade, TANK.sweep, TANK.shineFade]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
+        </Animated.View>
+      ) : null}
+      {w ? [0.86, 0.9, 0.12].map((x, i) => <Bubble key={i} x={w * x + (i === 1 ? 6 : 0)} delay={i * 1500} rise={height - 24} size={i === 1 ? 4 : 6} />) : null}
+    </View>
+  );
+}
+
+function Bubble({ x, delay, rise, size }: { x: number; delay: number; rise: number; size: number }) {
+  const p = useSharedValue(0);
+  useEffect(() => {
+    p.value = withDelay(delay, withRepeat(withTiming(1, { duration: 4600, easing: Easing.in(Easing.quad) }), -1, false));
+  }, []);
+  const a = useAnimatedStyle(() => ({
+    opacity: interpolate(p.value, [0, 0.1, 0.8, 1], [0, 0.85, 0.6, 0]),
+    transform: [{ translateY: -p.value * rise }, { translateX: Math.sin(p.value * 12) * 3 }, { scale: 0.7 + p.value * 0.5 }] as Transform,
+  }));
+  return <Animated.View style={[{ position: "absolute", left: x, bottom: 10, width: size, height: size, borderRadius: size, borderWidth: 1, borderColor: TANK.bubble, backgroundColor: TANK.bubbleFill }, a]} />;
+}
+
+/** Small picture of a tank for lists: its photo, a tiny live loop of its video, or the tank icon. */
+export function TankThumb({ media, size = 40, active, fallback }: { media?: TankMedia; size?: number; active?: boolean; fallback: React.ReactNode }) {
+  const uri = useMediaUri(media?.uri);
+  return (
+    <View style={{ width: size, height: size, borderRadius: 8, overflow: "hidden", alignItems: "center", justifyContent: "center", backgroundColor: TANK.frame, borderWidth: active ? 1.5 : 0, borderColor: TANK.light }}>
+      {media && uri ? (media.kind === "video" ? <ThumbVideo uri={uri} size={size} /> : <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="cover" />) : fallback}
+    </View>
+  );
+}
+function ThumbVideo({ uri, size }: { uri: string; size: number }) {
+  const player = useVideoPlayer(uri, (p) => { p.loop = true; p.muted = true; p.play(); });
+  return <VideoView player={player} style={{ width: size, height: size }} contentFit="cover" nativeControls={false} />;
+}
 
 function LoopVideo({ uri, height }: { uri: string; height: number }) {
   const ref = useRef<VideoView>(null);
@@ -121,8 +180,8 @@ export function TankView({
         ) : (
           <FilmYourTank height={height} onAdd={onAdd} busy={busy} />
         )}
-        {/* light falling from the hood, a diagonal reflection on the glass, and the glass edges */}
-        <LinearGradient pointerEvents="none" colors={[TANK.glow, TANK.glowFade]} style={[s.fill, { height: height * 0.35 }]} />
+        {/* light falling from the hood (alive when there is a video or photo), a diagonal reflection on the glass, and the glass edges */}
+        {media && uri ? <WaterLife height={height} /> : <LinearGradient pointerEvents="none" colors={[TANK.glow, TANK.glowFade]} style={[s.fill, { height: height * 0.35 }]} />}
         <LinearGradient pointerEvents="none" colors={[TANK.shineFade, TANK.shine, TANK.shineFade]} locations={[0.3, 0.45, 0.6]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.fill} />
         {media ? <LinearGradient pointerEvents="none" colors={[TANK.shade, TANK.shadeFade]} style={[s.fill, { height: 64 }]} /> : null}
         <View pointerEvents="none" style={s.edges} />

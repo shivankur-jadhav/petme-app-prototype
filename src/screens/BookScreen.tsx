@@ -6,6 +6,7 @@ import { Icon } from "../components/Icon";
 import { Badge, Btn, Check, Chips, Field, Label, Ledger, Panel, Press, Screen, SecHeader, Segmented, Title, haptic, layout } from "../components/ui";
 import { useStore } from "../store";
 import { FishChips } from "../components/SpeciesThumb";
+import { TankThumb } from "../components/TankView";
 import {
   ALL_IDEAS, CITIES, RECUR, SERVICES, SIZES, TYPES, WINDOWS, by, addressLine, dateOptions, fmtDate, fmtDur, makeBooking, phoneOk, money, money0, quote,
   RecurId, ServiceId, SizeId, TankType,
@@ -93,7 +94,7 @@ export default function BookScreen({ showSheet, closeSheet, openReport }: { show
             <Badge text={tank.sample ? "Sample profile" : "Saved"} tone={tank.sample ? "slate" : "cyan"} dashed={tank.sample} />
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-            <View style={{ width: 48, height: 48, borderRadius: 6, backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}><Icon name="tank" color={C.tertiary} /></View>
+            <TankThumb media={tank.media} size={48} fallback={<View style={{ width: 48, height: 48, backgroundColor: C.sHigh, alignItems: "center", justifyContent: "center" }}><Icon name="tank" color={C.tertiary} /></View>} />
             <View style={{ flex: 1 }}>
               <Text style={T.h3}>{tank.name}</Text>
               <Text style={T.small}>{by(TYPES, tank.type)!.name} · {by(SIZES, tank.size)!.name} gal</Text>

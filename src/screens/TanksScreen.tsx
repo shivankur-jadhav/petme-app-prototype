@@ -5,7 +5,7 @@ import { A, C, F, R, T } from "../theme";
 import { Icon } from "../components/Icon";
 import { PhotoCredits, SpeciesThumb } from "../components/SpeciesThumb";
 import { Badge, Btn, Chips, Field, Label, Panel, Press, Screen, SecHeader, Segmented, enter, haptic, layout, st } from "../components/ui";
-import { TankPill, TankView, mediaCaption } from "../components/TankView";
+import { TankPill, TankThumb, TankView, mediaCaption } from "../components/TankView";
 import { forgetMedia, latestTankMedia, pickTankMedia } from "../media";
 import { MetricGrid, TabId } from "../components/visuals";
 import { useStore } from "../store";
@@ -53,7 +53,8 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
 
   // The tank shown at the top: the newest of the customer's own video and any video a technician
   // attached when finishing a visit. Without either, the animated illustration stands in.
-  const media = useMemo(() => latestTankMedia(tank.media, mine.filter((b) => b.status === "done").map((b) => b.media)), [tank.media, mine]);
+  const mediaFor = (t: Tank) => latestTankMedia(t.media, bookings.filter((b) => b.status === "done" && forTank(b, t)).map((b) => b.media));
+  const media = useMemo(() => mediaFor(tank), [tank.media, mine]);
 
   const addMedia = async (source: "camera" | "library") => {
     setBusy(true);
@@ -102,9 +103,11 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
             return (
               <Press key={t.id} onPress={() => switchTo(t)} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${t.name}, ${by(TYPES, t.type)!.name}`}
                 style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: A.big ? 14 : 10, paddingHorizontal: 12, minWidth: 150, borderRadius: R.lg, borderWidth: 1, borderColor: on ? C.primary : C.line, backgroundColor: on ? C.sel : C.glass }}>
-                <View style={{ width: 32, height: 32, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: on ? C.primaryTint : C.sHigh }}>
-                  <Icon name="tank" size={18} color={on ? C.primary : C.muted} />
-                </View>
+                <TankThumb media={mediaFor(t)} size={40} fallback={
+                  <View style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: on ? C.primaryTint : C.sHigh }}>
+                    <Icon name="tank" size={18} color={on ? C.primary : C.muted} />
+                  </View>
+                } />
                 <View>
                   <Text style={[T.h3, { fontSize: 14, lineHeight: 18 }]} numberOfLines={1}>{t.name}</Text>
                   <Text style={[T.small, { fontSize: 11 }]}>{by(TYPES, t.type)!.short} · {by(SIZES, t.size)!.short} gal</Text>
