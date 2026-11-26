@@ -28,6 +28,14 @@ Source: `reference/stitch/DESIGN.md` and the four screen PNGs next to it. Tokens
 - Selected states animate (sliding segmented pill, ZoomIn check marks). Numbers that change re-enter via a `key` change.
 - Keep animations on the UI thread (Reanimated shared values), and keep loops cheap.
 
+## Accessibility (motor)
+For people with limited hand movement, tremors or limited reach. Keep these when adding screens:
+- Every `Press` has an invisible touch margin (`hitSlop`), and buttons are at least 48pt tall (36pt for small ones, plus the margin).
+- Profile → Accessibility: "Larger buttons and touch areas" (`A.big`) makes buttons, chips, checkboxes, segmented controls, tabs and the avatar physically bigger; "Ask me to tap twice before cancelling or removing anything" (`A.confirm`, on by default). Settings live in `access` in the store and are applied like the theme (`applyAccess` in `theme.ts`); read `A.big` inside `themed()` styles so they rebuild.
+- Anything that cancels, declines or removes uses `<Btn confirm="Tap again to …">`: the first tap only arms it (resets after 4 seconds).
+- Never make a gesture the only way to do something: the fish viewer has + / − zoom buttons and a close button alongside pinch, double-tap and swipe.
+- Give icon-only buttons an `accessibilityLabel` (Voice Control and screen readers use it). Motion follows the phone's Reduce Motion setting through Reanimated's default (`ReduceMotion.System`).
+
 ## Tank video
 The top of the Tanks screen is `TankView` (`src/components/TankView.tsx`): a drawn aquarium (hood with light bar, glass reflections, base trim) that loops the customer's real tank video, muted, with expo-video. A photo shows with a slow drift. With neither, the empty tank says "Film your tank" with Record a video / choose from my phone right inside the glass. There is no animated stand-in: the top of the Tanks screen is always the customer's real tank.
 - Customers add one from the empty tank itself or from Tanks → "Tank video" (record with the camera or choose from the phone). Technicians can attach one in Pro → "Complete with report"; it is saved on the booking (`Booking.media`) and shows in that visit's report.

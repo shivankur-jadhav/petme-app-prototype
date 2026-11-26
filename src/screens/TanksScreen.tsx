@@ -118,7 +118,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
           <Btn label="Record a video" icon="camera" disabled={busy} onPress={() => addMedia("camera")} />
           <Btn label="Choose from my phone" icon="gallery" kind="sec" disabled={busy} onPress={() => addMedia("library")} />
           {tank.media ? (
-            <Btn label="Remove my video" icon="trash" kind="danger" disabled={busy} onPress={() => { forgetMedia(tank.media); setTank({ ...tank, media: undefined }); setVideoPanel(false); toast("Video removed."); }} />
+            <Btn label="Remove my video" icon="trash" kind="danger" confirm="Tap again to remove video" disabled={busy} onPress={() => { forgetMedia(tank.media); setTank({ ...tank, media: undefined }); setVideoPanel(false); toast("Video removed."); }} />
           ) : null}
           {media && media.by === "technician" ? (
             <Text style={T.small}>Showing the video your technician recorded on {fmtDate(iso(new Date(media.addedAt)))}. A video you add now shows instead.</Text>
@@ -194,7 +194,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                     <Btn small icon="camera" label="Take photo" disabled={busy} onPress={() => addFishPhoto(s.name, "camera")} />
                     <Btn small kind="sec" icon="gallery" label="Choose photo" disabled={busy} onPress={() => addFishPhoto(s.name, "library")} />
-                    {fishPhotos[s.name] ? <Btn small kind="plain" icon="trash" label="Use stock photo" onPress={() => removeFishPhoto(s.name)} /> : null}
+                    {fishPhotos[s.name] ? <Btn small kind="plain" icon="trash" label="Use stock photo" confirm="Tap again to remove your photo" onPress={() => removeFishPhoto(s.name)} /> : null}
                   </View>
                 </Animated.View>
               ) : null}

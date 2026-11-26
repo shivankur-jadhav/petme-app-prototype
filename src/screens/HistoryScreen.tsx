@@ -168,7 +168,7 @@ export function ReportScreen({ id, onClose, go }: { id: string; onClose: () => v
                 {refundable(b) ? `Cancel now and your ${money(b.bookTotal)} booking charge is refunded.` : `The visit is less than 24 hours away, so the ${money(b.bookTotal)} booking charge is not refunded.`}
               </Text>
             ) : null}
-            <Btn label="Cancel this visit" kind="danger" onPress={() => {
+            <Btn label="Cancel this visit" kind="danger" confirm="Tap again to cancel visit" onPress={() => {
               const p = cancelPatch(b, "customer");
               patchBooking(b.id, p); haptic.soft();
               toast(!b.bookTotal ? "Visit cancelled." : p.bookRefunded ? "Visit cancelled. Booking charge refunded." : "Visit cancelled. Booking charge kept.");

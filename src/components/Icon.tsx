@@ -33,6 +33,7 @@ const P: Record<string, string[]> = {
   moon: ["M19 14.5A7.5 7.5 0 1 1 9.5 5a6 6 0 0 0 9.5 9.5z"],
   flask: ["M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 15h9"],
   plus: ["M12 5v14M5 12h14"],
+  minus: ["M5 12h14"],
   edit: ["M4 20h4L19 9l-4-4L4 16z"],
   note: ["M6 3.5h9l4 4v13H6z", "M9 11h7M9 15h7"],
   drop: ["M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"],

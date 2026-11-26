@@ -121,6 +121,20 @@ let version = 0;
 export const themeMode = () => mode;
 export const isDark = () => mode === "dark";
 
+/** Accessibility settings for people with limited hand movement, applied like the theme. */
+export type Access = { big: boolean; confirm: boolean };
+export const DEFAULT_ACCESS: Access = { big: false, confirm: true };
+/** The active accessibility settings. `big`: larger buttons and touch areas. `confirm`: ask before cancelling or removing. */
+export const A: Access = { ...DEFAULT_ACCESS };
+/** Apply accessibility settings; themed styles rebuild when the button size changes. */
+export function applyAccess(next: Access) {
+  A.confirm = next.confirm;
+  if (next.big === A.big) return false;
+  A.big = next.big;
+  version++;
+  return true;
+}
+
 /** Switch the active palette. Returns true if it changed; the caller re-renders the app. */
 export function applyTheme(next: ThemeMode) {
   if (next === mode) return false;

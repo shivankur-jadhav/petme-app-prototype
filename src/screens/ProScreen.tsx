@@ -45,7 +45,7 @@ function CompleteForm({ b, onDone, onCancel, toast }: { b: Booking; onDone: (r: 
           <Animated.View entering={FadeIn} style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <Icon name="check" size={16} color={C.ok} width={2.4} />
             <Text style={[T.body2, { flex: 1 }]}>{media.kind === "video" ? "Video" : "Photo"} attached. It will show at the top of the customer's Tanks screen.</Text>
-            <Btn small kind="plain" label="Remove" onPress={() => { forgetMedia(media); setMedia(undefined); }} />
+            <Btn small kind="plain" label="Remove" confirm="Tap again to remove video" onPress={() => { forgetMedia(media); setMedia(undefined); }} />
           </Animated.View>
         ) : (
           <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
@@ -129,11 +129,11 @@ export default function ProScreen({ openReport, go }: { openReport: (id: string)
                       {b.bookTotal ? <>Booking <Text style={{ color: C.ink }}>{money(b.bookTotal)}</Text> {b.status === "cancelled" ? (b.bookRefunded ? "refunded" : "kept") : "paid"} · </> : null}{b.status === "done" ? "Service" : "Due after"} <Text style={{ color: C.ink }}>{money(b.total)}</Text>{e ? <> · Margin <Text style={{ color: C.ink }}>{money0(e.margin)} ({Math.round(e.pct * 100)}%)</Text></> : null}
                     </Text>
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                      {b.status === "new" ? <><Btn small label="Confirm" onPress={() => { patchBooking(b.id, { status: "confirmed" }); haptic.success(); }} /><Btn small kind="danger" label="Decline" onPress={() => patchBooking(b.id, cancelPatch(b, "petme"))} /></> : null}
-                      {b.status === "confirmed" ? <><Btn small label="Complete with report" onPress={() => setCompleting(b.id)} /><Btn small kind="danger" label="Cancel" onPress={() => patchBooking(b.id, cancelPatch(b, "petme"))} /></> : null}
+                      {b.status === "new" ? <><Btn small label="Confirm" onPress={() => { patchBooking(b.id, { status: "confirmed" }); haptic.success(); }} /><Btn small kind="danger" label="Decline" confirm="Tap again to decline" onPress={() => patchBooking(b.id, cancelPatch(b, "petme"))} /></> : null}
+                      {b.status === "confirmed" ? <><Btn small label="Complete with report" onPress={() => setCompleting(b.id)} /><Btn small kind="danger" label="Cancel" confirm="Tap again to cancel job" onPress={() => patchBooking(b.id, cancelPatch(b, "petme"))} /></> : null}
                       {b.status === "cancelled" ? <Btn small kind="sec" label="Restore" onPress={() => patchBooking(b.id, restorePatch)} /> : null}
                       {b.status === "done" ? <Btn small kind="sec" label="View report" onPress={() => openReport(b.id)} /> : null}
-                      <Btn small kind="plain" label="Remove" onPress={() => removeBooking(b.id)} />
+                      <Btn small kind="plain" label="Remove" confirm="Tap again to remove job" onPress={() => removeBooking(b.id)} />
                     </View>
                   </Animated.View>
                 )}

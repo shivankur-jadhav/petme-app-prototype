@@ -3,7 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Booking, EMPTY_PROFILE, Profile, Tank, exampleBookings } from "./data";
-import { ThemePref } from "./theme";
+import { Access, DEFAULT_ACCESS, ThemePref } from "./theme";
 
 const KEY = "petme:v1";
 
@@ -15,11 +15,13 @@ type Store = {
   profile: Profile;
   profileOpen: boolean;
   themePref: ThemePref;
+  access: Access;
   toastMsg: { id: number; text: string } | null;
   setTank: (t: Tank) => void;
   setProfile: (p: Partial<Profile>) => void;
   setProfileOpen: (open: boolean) => void;
   setThemePref: (p: ThemePref) => void;
+  setAccess: (a: Partial<Access>) => void;
   addBooking: (b: Booking) => void;
   patchBooking: (id: string, p: Partial<Booking>) => void;
   removeBooking: (id: string) => void;
@@ -41,6 +43,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfileState] = useState<Profile>(EMPTY_PROFILE);
   const [profileOpen, setProfileOpen] = useState(false);
   const [themePref, setThemePref] = useState<ThemePref>("system");
+  const [access, setAccessState] = useState<Access>(DEFAULT_ACCESS);
   const [toastMsg, setToast] = useState<{ id: number; text: string } | null>(null);
   const toastTimer = useRef<any>(null);
 
@@ -54,6 +57,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (Array.isArray(s.wish)) setWish(s.wish);
         if (s.profile) setProfileState({ ...EMPTY_PROFILE, ...s.profile });
         if (s.themePref === "light" || s.themePref === "dark" || s.themePref === "system") setThemePref(s.themePref);
+        if (s.access) setAccessState({ ...DEFAULT_ACCESS, ...s.access });
       })
       .catch(() => {})
       .finally(() => setReady(true));
@@ -61,8 +65,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(KEY, JSON.stringify({ tank, bookings, wish, profile, themePref })).catch(() => {});
-  }, [ready, tank, bookings, wish, profile, themePref]);
+    AsyncStorage.setItem(KEY, JSON.stringify({ tank, bookings, wish, profile, themePref, access })).catch(() => {});
+  }, [ready, tank, bookings, wish, profile, themePref, access]);
 
   const toast = useCallback((text: string) => {
     clearTimeout(toastTimer.current);
@@ -71,7 +75,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<Store>(() => ({
-    ready, tank, bookings, wish, profile, profileOpen, themePref, setThemePref, toastMsg, toast,
+    ready, tank, bookings, wish, profile, profileOpen, themePref, setThemePref, access, toastMsg, toast,
+    setAccess: (a) => setAccessState((prev) => ({ ...prev, ...a })),
     setTank: (t) => setTankState(t),
     setProfile: (p) => setProfileState((prev) => ({ ...prev, ...p, since: prev.since || Date.now() })),
     setProfileOpen,
@@ -86,7 +91,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     clearWish: () => setWish([]),
     loadExamples: () => setBookings((prev) => [...exampleBookings(), ...prev]),
     clearExamples: () => setBookings((prev) => prev.filter((b) => !b.example)),
-  }), [ready, tank, bookings, wish, profile, profileOpen, themePref, toastMsg, toast]);
+  }), [ready, tank, bookings, wish, profile, profileOpen, themePref, access, toastMsg, toast]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

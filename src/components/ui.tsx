@@ -6,7 +6,7 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, F, R, SPRING, T, isDark, themed } from "../theme";
+import { A, C, F, R, SPRING, T, isDark, themed } from "../theme";
 import { Icon } from "./Icon";
 import { useStore } from "../store";
 import { initials } from "../data";
@@ -37,6 +37,7 @@ export function Press({
   return (
     <APressable
       disabled={disabled}
+      hitSlop={A.big ? 12 : 8}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
       accessibilityState={accessibilityState}
@@ -102,8 +103,22 @@ export function Badge({ text, tone = "cyan", dot, pulse, dashed }: { text: strin
 }
 
 export function Btn({
-  label, onPress, kind = "primary", icon, small, block, disabled,
-}: { label: string; onPress?: () => void; kind?: "primary" | "sec" | "ghost" | "danger" | "plain"; icon?: string; small?: boolean; block?: boolean; disabled?: boolean }) {
+  label, onPress, kind = "primary", icon, small, block, disabled, confirm,
+}: { label: string; onPress?: () => void; kind?: "primary" | "sec" | "ghost" | "danger" | "plain"; icon?: string; small?: boolean; block?: boolean; disabled?: boolean;
+  /** For cancelling or removing: when set (and the setting is on), the first tap asks "Tap again to …" and only the second tap acts. */
+  confirm?: string }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  const press = () => {
+    if (confirm && A.confirm && !armed) { setArmed(true); haptic.error(); return; }
+    setArmed(false);
+    onPress && onPress();
+  };
+  if (armed) kind = "danger";
   const k = {
     primary: { bg: C.primary, fg: C.onPrimary, bd: C.primary },
     sec: { bg: "transparent", fg: C.primary, bd: C.primaryGlow },
@@ -113,18 +128,18 @@ export function Btn({
   }[kind];
   return (
     <Press
-      onPress={onPress}
+      onPress={press}
       disabled={disabled}
       feedback={kind === "primary" ? "soft" : "tap"}
-      accessibilityLabel={label}
+      accessibilityLabel={armed ? `Tap again to confirm: ${label}` : label}
       style={[
         st.btn, small && st.btnSm, block && { alignSelf: "stretch" },
         { backgroundColor: k.bg, borderColor: k.bd },
         kind === "primary" && st.glow,
       ]}
     >
-      {icon ? <Icon name={icon} size={small ? 15 : 17} color={k.fg} width={2} /> : null}
-      <Text style={[st.btnText, small && { fontSize: 13 }, { color: k.fg }]}>{label}</Text>
+      {armed ? <Icon name="close" size={small ? 15 : 17} color={k.fg} width={2} /> : icon ? <Icon name={icon} size={small ? 15 : 17} color={k.fg} width={2} /> : null}
+      <Text style={[st.btnText, small && { fontSize: A.big ? 15 : 13 }, { color: k.fg }]}>{armed ? confirm : label}</Text>
     </Press>
   );
 }
@@ -202,7 +217,7 @@ export function Check({ label, value, onChange }: { label: string; value: boolea
   return (
     <Press onPress={() => onChange(!value)} scaleTo={0.99} accessibilityRole="checkbox" accessibilityState={{ checked: value }} style={st.check}>
       <View style={[st.box, value && { backgroundColor: C.primary, borderColor: C.primary }]}>
-        {value ? <Animated.View entering={ZoomIn.springify().damping(14)}><Icon name="check" size={13} color={C.onPrimary} width={3} /></Animated.View> : null}
+        {value ? <Animated.View entering={ZoomIn.springify().damping(14)}><Icon name="check" size={A.big ? 18 : 13} color={C.onPrimary} width={3} /></Animated.View> : null}
       </View>
       <Text style={[T.body2, { flex: 1, color: C.ink }]}>{label}</Text>
     </Press>
@@ -311,21 +326,21 @@ export const st = themed(() => StyleSheet.create({
   secH: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" },
   badge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: R.sm, borderWidth: 1, alignSelf: "flex-start" },
   badgeText: { fontFamily: F.body600, fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" },
-  btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderRadius: R.sm, paddingVertical: 13, paddingHorizontal: 16 },
-  btnSm: { paddingVertical: 8, paddingHorizontal: 12 },
-  btnText: { fontFamily: F.body600, fontSize: 15 },
+  btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderRadius: R.sm, paddingVertical: A.big ? 17 : 13, paddingHorizontal: 16, minHeight: A.big ? 58 : 48 },
+  btnSm: { paddingVertical: A.big ? 12 : 8, paddingHorizontal: A.big ? 16 : 12, minHeight: A.big ? 48 : 36 },
+  btnText: { fontFamily: F.body600, fontSize: A.big ? 17 : 15 },
   glow: { shadowColor: C.primary, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   seg: { flexDirection: "row", backgroundColor: C.bg, borderColor: C.line2, borderWidth: 1, borderRadius: R.md, padding: 3 },
   segPill: { position: "absolute", top: 3, bottom: 3, left: 3, borderRadius: R.sm, backgroundColor: C.glass2, borderWidth: 1, borderColor: C.primaryGlow },
-  segItem: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 9, paddingHorizontal: 2 },
+  segItem: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: A.big ? 14 : 9, paddingHorizontal: 2 },
   segText: { fontFamily: F.body500, fontSize: 13, color: C.ink2 },
   segSub: { fontFamily: F.body, fontSize: 10, color: C.muted, marginTop: 1 },
-  chip: { borderWidth: 1, borderColor: C.line2, backgroundColor: C.sLow, borderRadius: R.sm, paddingHorizontal: 13, paddingVertical: 8 },
+  chip: { borderWidth: 1, borderColor: C.line2, backgroundColor: C.sLow, borderRadius: R.sm, paddingHorizontal: A.big ? 16 : 13, paddingVertical: A.big ? 13 : 8 },
   chipText: { fontFamily: F.body500, fontSize: 13, color: C.ink2 },
   fieldLabel: { fontFamily: F.body500, fontSize: 12, color: C.ink2 },
   input: { backgroundColor: C.input, borderColor: C.line2, borderWidth: 1, borderRadius: R.sm, paddingHorizontal: 12, paddingVertical: 11, color: C.white, fontFamily: F.body, fontSize: 15 },
-  check: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.hair },
-  box: { width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, borderColor: C.line2, alignItems: "center", justifyContent: "center" },
+  check: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: A.big ? 16 : 10, borderTopWidth: 1, borderTopColor: C.hair },
+  box: { width: A.big ? 28 : 20, height: A.big ? 28 : 20, borderRadius: 4, borderWidth: 1.5, borderColor: C.line2, alignItems: "center", justifyContent: "center" },
   mono: { fontFamily: F.mono, fontSize: 13, color: C.ink },
   lrow: { flexDirection: "row", justifyContent: "space-between", gap: 10 },
   ltot: { flexDirection: "row", alignItems: "flex-end", gap: 10, borderTopWidth: 1, borderTopColor: C.hair, paddingTop: 12, marginTop: 4 },
@@ -334,7 +349,7 @@ export const st = themed(() => StyleSheet.create({
   appbar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingBottom: 2 },
   mark: { width: 34, height: 34, borderRadius: 6, backgroundColor: C.sHigh, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
   brand: { fontFamily: F.head700, fontSize: 19, color: C.primary },
-  avatar: { width: 38, height: 38, borderRadius: 8, backgroundColor: C.sTop, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
+  avatar: { width: A.big ? 48 : 40, height: A.big ? 48 : 40, borderRadius: 8, backgroundColor: C.sTop, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
   avatarDot: { position: "absolute", right: -3, bottom: -3, width: 10, height: 10, borderRadius: 5, backgroundColor: C.tertiary, borderWidth: 2, borderColor: C.bg },
   toast: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.sTop, borderColor: C.primary, borderWidth: 1, borderRadius: R.md, paddingHorizontal: 14, paddingVertical: 10, maxWidth: 360, marginHorizontal: 16,
     shadowColor: C.shadow, shadowOpacity: isDark() ? 0.6 : 0.16, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 10 },

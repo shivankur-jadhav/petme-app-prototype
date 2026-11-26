@@ -115,9 +115,20 @@ function Zoomable({ w, h, onDismiss, onDrag, children }: { w: number; h: number;
   return (
     <View style={{ width: w, height: h, overflow: "hidden" }} {...pan.panHandlers}>
       <Animated.View style={[{ width: w, height: h }, a]}>{children}</Animated.View>
+      {/* Buttons as well as gestures, for anyone who can't pinch or double-tap */}
+      <View style={{ position: "absolute", right: 12, bottom: 12, flexDirection: "row", gap: 10 }}>
+        <Press accessibilityLabel="Zoom out" onPress={() => zoomTo(Math.max(1, scale.value / 1.6), tx.value / 1.6, ty.value / 1.6)} style={ZBTN}>
+          <Icon name="minus" size={22} color="#FFFFFF" width={2.2} />
+        </Press>
+        <Press accessibilityLabel="Zoom in" onPress={() => { const n = Math.min(MAX, scale.value * 1.6); zoomTo(n, tx.value * (n / scale.value), ty.value * (n / scale.value)); }} style={ZBTN}>
+          <Icon name="plus" size={22} color="#FFFFFF" width={2.2} />
+        </Press>
+      </View>
     </View>
   );
 }
+
+const ZBTN = { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(6,20,38,0.72)", borderWidth: 1, borderColor: "rgba(226,242,255,0.25)" } as const;
 
 function Viewer({ fish, onClose }: { fish: FishView; onClose: () => void }) {
   const ins = useSafeAreaInsets();
@@ -152,7 +163,7 @@ function Viewer({ fish, onClose }: { fish: FishView; onClose: () => void }) {
       <Animated.View style={[{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "rgba(2,8,18,0.94)" }, backdrop]} />
       <View style={{ paddingTop: ins.top + 8, flex: 1 }}>
         <View style={{ flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: 16, paddingBottom: 8 }}>
-          <Press onPress={close} accessibilityLabel="Close photo" style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)" }}>
+          <Press onPress={close} accessibilityLabel="Close photo" style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)" }}>
             <Icon name="close" size={20} color="#FFFFFF" width={2} />
           </Press>
         </View>
@@ -178,8 +189,8 @@ function Viewer({ fish, onClose }: { fish: FishView; onClose: () => void }) {
             )}
           </Zoomable>
           {hint ? (
-            <Animated.View entering={FadeIn.delay(400)} exiting={FadeOut} pointerEvents="none" style={{ position: "absolute", bottom: 10, alignSelf: "center", backgroundColor: "rgba(6,20,38,0.75)", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
-              <Text style={{ fontFamily: F.body500, fontSize: 12, color: "#E2F2FF" }}>Pinch or double-tap to zoom</Text>
+            <Animated.View entering={FadeIn.delay(400)} exiting={FadeOut} pointerEvents="none" style={{ position: "absolute", top: 10, alignSelf: "center", backgroundColor: "rgba(6,20,38,0.75)", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
+              <Text style={{ fontFamily: F.body500, fontSize: 12, color: "#E2F2FF" }}>Pinch, double-tap or use + and − to zoom</Text>
             </Animated.View>
           ) : null}
         </Animated.View>

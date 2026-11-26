@@ -14,7 +14,7 @@ const COL = { flexGrow: 0, flexShrink: 0, flexBasis: "auto" } as const;
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default function ProfileScreen({ onClose, go }: { onClose: () => void; go: (t: TabId) => void }) {
-  const { profile, setProfile, bookings, tank, toast, themePref, setThemePref } = useStore();
+  const { profile, setProfile, bookings, tank, toast, themePref, setThemePref, access, setAccess } = useStore();
   const ins = useSafeAreaInsets();
   const [d, setD] = useState<Profile>(profile);
   const [err, setErr] = useState("");
@@ -111,6 +111,13 @@ export default function ProfileScreen({ onClose, go }: { onClose: () => void; go
           </Panel>
 
           <Panel index={6}>
+            <SecHeader title="Accessibility" icon="user" right={<Label>Saved right away</Label>} />
+            <Check label="Larger buttons and touch areas" value={access.big} onChange={(v) => setAccess({ big: v })} />
+            <Check label="Ask me to tap twice before cancelling or removing anything" value={access.confirm} onChange={(v) => setAccess({ confirm: v })} />
+            <Text style={T.small}>PetMe also follows your phone's Reduce Motion setting. Buttons are labelled so Voice Control and screen readers can use them.</Text>
+          </Panel>
+
+          <Panel index={7}>
             <SecHeader title="Your tank" icon="tank" right={tank.sample ? <Badge text="Sample profile" tone="slate" dashed /> : null} />
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
               <View style={{ flex: 1 }}>

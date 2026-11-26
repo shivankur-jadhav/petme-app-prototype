@@ -8,7 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, F, R, SPRING, T, isDark, themed } from "../theme";
+import { A, C, F, R, SPRING, T, isDark, themed } from "../theme";
 import { Icon } from "./Icon";
 import { Badge, haptic } from "./ui";
 import { Metric, TankType, chemOf, judge } from "../data";
@@ -80,7 +80,7 @@ function TabItem({ tab, active, onPress, badge }: { tab: (typeof TABS)[number]; 
   return (
     <Pressable onPress={onPress} style={ts.item} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={tab.label}>
       <Animated.View style={icon}>
-        <Icon name={tab.icon} size={22} color={active ? C.primary : C.muted} />
+        <Icon name={tab.icon} size={A.big ? 26 : 22} color={active ? C.primary : C.muted} />
         {badge ? <View style={ts.badge}><Text style={ts.badgeText}>{badge}</Text></View> : null}
       </Animated.View>
       <Text style={[ts.label, active && { color: C.primary, fontFamily: F.body600 }]} numberOfLines={1}>{tab.label}</Text>
@@ -112,8 +112,8 @@ export function TabBar({ value, onChange, badges }: { value: TabId; onChange: (t
 const ts = themed(() => StyleSheet.create({
   bar: { position: "absolute", left: 0, right: 0, bottom: 0, borderTopWidth: 1, borderTopColor: C.line, overflow: "hidden" },
   row: { flexDirection: "row", paddingTop: 8, paddingHorizontal: 6 },
-  item: { flex: 1, alignItems: "center", gap: 3, paddingVertical: 4 },
-  label: { fontFamily: F.body500, fontSize: 11, color: C.muted },
+  item: { flex: 1, alignItems: "center", gap: 3, paddingVertical: A.big ? 9 : 4, minHeight: A.big ? 60 : 48 },
+  label: { fontFamily: F.body500, fontSize: A.big ? 13 : 11, color: C.muted },
   ind: { position: "absolute", top: 0, left: 6, width: 32, height: 3, borderRadius: 2, backgroundColor: C.primary, shadowColor: C.primary, shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } },
   badge: { position: "absolute", right: -8, top: -4, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: C.tertiary, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
   badgeText: { fontFamily: F.body600, fontSize: 10, color: C.onPrimary },

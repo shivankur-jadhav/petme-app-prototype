@@ -5,7 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useFonts, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
-import { C, applyTheme } from "./src/theme";
+import { C, applyAccess, applyTheme } from "./src/theme";
 import { StoreProvider, useStore } from "./src/store";
 import { FishViewerProvider } from "./src/components/FishViewer";
 import { TabBar, TabId, Sheet } from "./src/components/visuals";
@@ -18,12 +18,13 @@ import ProScreen from "./src/screens/ProScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 
 function Shell() {
-  const { ready, bookings, wish, profileOpen, setProfileOpen, themePref } = useStore();
+  const { ready, bookings, wish, profileOpen, setProfileOpen, themePref, access } = useStore();
   // Resolve the light/dark choice and apply it before anything below renders, so every screen
   // reads the right palette from `C` on this render.
   const scheme = useColorScheme();
   const mode = themePref === "system" ? (scheme === "light" ? "light" : "dark") : themePref;
   applyTheme(mode);
+  applyAccess(access);
   const [tab, setTab] = useState<TabId>("tanks");
   const [reportId, setReportId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<React.ReactNode>(null);
