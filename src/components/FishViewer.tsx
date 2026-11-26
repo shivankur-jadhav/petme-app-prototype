@@ -3,7 +3,9 @@
 // a plain description, and the photo credit the licence requires.
 // Built on PanResponder + Reanimated so it needs no extra native package and works in Expo Go.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Image, Linking, Modal, PanResponder, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { Image, Linking, Modal, PanResponder, ScrollView, Text, View, ViewStyle, useWindowDimensions } from "react-native";
+
+type Transform = NonNullable<ViewStyle["transform"]>;
 import Animated, { FadeIn, FadeOut, SlideInDown, ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R, SPRING, T } from "../theme";
@@ -40,7 +42,7 @@ export function FishViewerProvider({ children }: { children: React.ReactNode }) 
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-const dist = (t: any[]) => Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
+const dist = (t: readonly any[]) => Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
 const MAX = 4;
 
 /** Pinch, pan and double-tap zoom for one image filling a box of `w` x `h`. */
@@ -51,7 +53,7 @@ function Zoomable({ w, h, onDismiss, onDrag, children }: { w: number; h: number;
   const g = useRef({ scale: 1, tx: 0, ty: 0, d: 0, x: 0, y: 0, pinch: false, lastTap: 0, moved: false });
   const limit = (s: number) => ({ x: (w * s - w) / 2, y: (h * s - h) / 2 });
 
-  const begin = (t: any[]) => {
+  const begin = (t: readonly any[]) => {
     Object.assign(g.current, { scale: scale.value, tx: tx.value, ty: ty.value, x: t[0].pageX, y: t[0].pageY, pinch: t.length >= 2, d: t.length >= 2 ? dist(t) : 0 });
   };
   const zoomTo = (s: number, x = 0, y = 0) => {
@@ -109,7 +111,7 @@ function Zoomable({ w, h, onDismiss, onDrag, children }: { w: number; h: number;
     },
   }), [w, h]);
 
-  const a = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value }, { scale: scale.value }] }));
+  const a = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value }, { scale: scale.value }] as Transform }));
   return (
     <View style={{ width: w, height: h, overflow: "hidden" }} {...pan.panHandlers}>
       <Animated.View style={[{ width: w, height: h }, a]}>{children}</Animated.View>
