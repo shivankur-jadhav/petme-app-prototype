@@ -174,7 +174,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
             <Animated.View key={tank.type + s.name} entering={FadeIn.delay(i * 40)} exiting={FadeOut.duration(120)} layout={layout}
               style={{ paddingVertical: 12, gap: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.hair }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                <SpeciesThumb species={s} own={fishPhotos[s.name]?.uri} size={60} />
+                <SpeciesThumb species={s} own={fishPhotos[s.name]?.uri} size={60} zoom={{ extra: [{ label: `In your tank: ${s.qty}` }] }} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={T.h3}>{s.name}</Text>
                   <Text style={T.small}>{s.role}</Text>

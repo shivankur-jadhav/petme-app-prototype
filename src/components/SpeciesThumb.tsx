@@ -10,10 +10,32 @@ import { Press, layout } from "./ui";
 import { useSpeciesPhoto } from "../speciesPhoto";
 import { SPECIES_PHOTOS } from "../speciesPhotos";
 import { ALL_IDEAS, STOCK } from "../data";
+import { FishView, useFishViewer } from "./FishViewer";
 
 type Species = { name: string; art: string; wiki: string[] };
 
-export function SpeciesThumb({ species, own, size = 60, round }: { species: Species; own?: string; size?: number; round?: boolean }) {
+/** Tap-to-zoom wrapper: pass `zoom` to make the thumbnail open the full-screen viewer. */
+export function SpeciesThumb(props: { species: Species; own?: string; size?: number; round?: boolean; zoom?: boolean | { extra?: FishView["extra"] } }) {
+  const openFish = useFishViewer();
+  const { species, own, size = 60, zoom } = props;
+  if (!zoom) return <Thumb {...props} />;
+  return (
+    <Press
+      onPress={() => openFish({ name: species.name, art: species.art, wiki: species.wiki, own, extra: typeof zoom === "object" ? zoom.extra : undefined })}
+      scaleTo={0.94}
+      accessibilityLabel={`View photo of ${species.name}`}
+    >
+      <Thumb {...props} />
+      {size >= 56 ? (
+        <View pointerEvents="none" style={{ position: "absolute", right: 4, bottom: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: "rgba(6,20,38,0.7)", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="expand" size={11} color="#FFFFFF" width={2.2} />
+        </View>
+      ) : null}
+    </Press>
+  );
+}
+
+function Thumb({ species, own, size = 60, round }: { species: Species; own?: string; size?: number; round?: boolean }) {
   const bundled = SPECIES_PHOTOS[species.art];
   const photo = useSpeciesPhoto(own || bundled ? undefined : species.wiki);
   const [failed, setFailed] = useState<string | null>(null);
@@ -82,6 +104,7 @@ export const speciesByName = (name: string) => KNOWN.find((s) => s.name === name
 
 /** Fish named on a booking, each with a small round photo, plus the photo credits the licences require. */
 export function FishChips({ names, label }: { names: string[]; label?: string }) {
+  const openFish = useFishViewer();
   const found = names.map((n) => ({ n, s: speciesByName(n) }));
   const known = found.map((f) => f.s).filter(Boolean) as Species[];
   return (
@@ -89,10 +112,12 @@ export function FishChips({ names, label }: { names: string[]; label?: string })
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
         {label ? <Text style={T.label}>{label}</Text> : null}
         {found.map(({ n, s }) => (
-          <View key={n} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 3, paddingRight: 10, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.tertTint }}>
+          <Press key={n} disabled={!s} scaleTo={0.95} accessibilityLabel={`View ${n}`}
+            onPress={() => { if (s) openFish({ name: s.name, art: s.art, wiki: s.wiki }); }}
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 3, paddingRight: 10, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.tertTint }}>
             {s ? <SpeciesThumb species={s} size={26} round /> : null}
             <Text style={[T.small, { color: C.ink }]}>{n}</Text>
-          </View>
+          </Press>
         ))}
       </View>
       <PhotoCredits species={known} />

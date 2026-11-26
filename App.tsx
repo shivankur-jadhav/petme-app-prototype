@@ -7,6 +7,7 @@ import { useFonts, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotes
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
 import { C, applyTheme } from "./src/theme";
 import { StoreProvider, useStore } from "./src/store";
+import { FishViewerProvider } from "./src/components/FishViewer";
 import { TabBar, TabId, Sheet } from "./src/components/visuals";
 import { Toast } from "./src/components/ui";
 import TanksScreen from "./src/screens/TanksScreen";
@@ -75,7 +76,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <View style={[StyleSheet.absoluteFill, { backgroundColor: C.bg }]}>
-        {loaded ? <StoreProvider><Shell /></StoreProvider> : null}
+        {loaded ? <StoreProvider><FishViewerProvider><Shell /></FishViewerProvider></StoreProvider> : null}
       </View>
     </SafeAreaProvider>
   );

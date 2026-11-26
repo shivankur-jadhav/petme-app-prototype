@@ -23,7 +23,7 @@ export default function LivestockScreen({ go }: { go: (t: TabId) => void }) {
         return (
           <Panel key={tank.type + f.id} index={i + 1}>
             <View style={{ flexDirection: "row", gap: 12 }}>
-              <SpeciesThumb species={{ name: f.name, art: f.id, wiki: f.wiki }} size={84} />
+              <SpeciesThumb species={{ name: f.name, art: f.id, wiki: f.wiki }} size={84} zoom={{ extra: [{ label: fit[1], tone: fit[0] }, { label: `Min. ${f.minGal} gal`, tone: "slate" }] }} />
               <View style={{ flex: 1, gap: 3 }}>
                 <Text style={[T.label, { letterSpacing: 0.8 }]}>{f.sci}</Text>
                 <Text style={[T.h2, { fontSize: 18 }]}>{f.name}</Text>
