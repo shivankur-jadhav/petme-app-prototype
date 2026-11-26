@@ -16,6 +16,7 @@ import { SPECIES_PHOTOS } from "../speciesPhotos";
 import { SPECIES_INFO } from "../speciesInfo";
 import { useSpeciesPhoto } from "../speciesPhoto";
 import { largePhotoUrl } from "../zoomPhoto";
+import { FishRecord } from "../data";
 
 export type FishView = {
   name: string;
@@ -23,7 +24,36 @@ export type FishView = {
   wiki?: string[];
   own?: string; // the customer's own photo of this fish
   extra?: { label: string; tone?: string }[]; // e.g. "In your tank: 2", "Good fit"
+  mine?: FishRecord; // the customer's own animals: age, time in the tank, health
 };
+
+const HEALTH: Record<string, [string, string]> = { good: ["Healthy", "ok"], watch: ["Keep an eye on", "warn"], sick: ["Needs care", "crit"] };
+
+/** "Your fish": estimated age, time in the tank and health, above the species facts. */
+function YourFish({ r }: { r: FishRecord }) {
+  const [label, tone] = HEALTH[r.health] || HEALTH.good;
+  return (
+    <View style={{ gap: 10, padding: 12, borderRadius: R.lg, borderWidth: 1, borderColor: C.line, backgroundColor: C.glass }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <Text style={T.h3}>{r.qty > 1 ? `Your ${r.qty}` : "Yours"}</Text>
+        <Badge text={label} tone={tone} dot pulse={r.health !== "good"} />
+      </View>
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        {[["Age (estimated)", r.age], ["In your tank", `${r.inTank} · since ${r.since}`]].map(([k, v]) => (
+          <View key={k} style={{ flex: 1, gap: 3 }}>
+            <Text style={T.label}>{k}</Text>
+            <Text style={[T.body, { fontFamily: F.head600 }]}>{v}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={{ gap: 3 }}>
+        <Text style={T.label}>Health</Text>
+        <Text style={T.body2}>{r.note}</Text>
+      </View>
+      <Text style={[T.small, { fontSize: 11 }]}>Sample record. Your technician updates age and health at each visit.</Text>
+    </View>
+  );
+}
 
 const Ctx = createContext<(f: FishView) => void>(() => {});
 /** Open the fish viewer from anywhere: `const openFish = useFishViewer(); openFish({ name, art })`. */
@@ -208,6 +238,7 @@ function Viewer({ fish, onClose }: { fish: FishView; onClose: () => void }) {
               {(fish.extra || []).map((x) => <Badge key={x.label} text={x.label} tone={x.tone || "tert"} />)}
               {info ? <Badge text={`Care: ${info.care}`} tone={careTone} dot /> : null}
             </View>
+            {fish.mine ? <YourFish r={fish.mine} /> : null}
             {info ? (
               <View style={{ flexDirection: "row", borderWidth: 1, borderColor: C.hair, borderRadius: R.md, overflow: "hidden" }}>
                 {[["Adult size", info.size], ["Comes from", info.origin]].map(([k, v], i) => (

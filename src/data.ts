@@ -242,24 +242,48 @@ export const SAMPLE_READINGS: Record<"fresh" | "salt", Record<string, number>> =
 };
 
 /* ---------- livestock ---------- */
-/** `wiki`: Wikipedia page titles to try, in order, for the species photo (see src/speciesPhoto.ts). */
-export type Critter = { name: string; kind: "fish" | "inv"; qty: number; role: string; color: string; art: string; wiki: string[] };
+/** `wiki`: Wikipedia page titles to try, in order, for the species photo (see src/speciesPhoto.ts).
+ *  The record fields describe the customer's own animals (sample values until technicians keep them):
+ *  `ageAtAdd` estimated age in months when it joined the tank, `addedMonthsAgo`, `health` and `healthNote`. */
+export type Health = "good" | "watch" | "sick";
+export type Critter = {
+  name: string; kind: "fish" | "inv"; qty: number; role: string; color: string; art: string; wiki: string[];
+  ageAtAdd: number; addedMonthsAgo: number; health: Health; healthNote: string;
+};
 export const STOCK: Record<"fresh" | "salt", Critter[]> = {
   salt: [
-    { name: "Ocellaris clownfish", kind: "fish", qty: 2, role: "Hosts near the rockwork", color: "#F97316", art: "clown", wiki: ["Ocellaris clownfish"] },
-    { name: "Yellow watchman goby", kind: "fish", qty: 1, role: "Sand dweller", color: "#FACC15", art: "goby", wiki: ["Yellow prawn-goby", "Cryptocentrus cinctus"] },
-    { name: "Banggai cardinalfish", kind: "fish", qty: 3, role: "Hovers mid-water", color: "#CBD5E1", art: "cardinal", wiki: ["Banggai cardinalfish"] },
-    { name: "Skunk cleaner shrimp", kind: "inv", qty: 1, role: "Cleaner", color: "#F43F5E", art: "cleaner", wiki: ["Lysmata amboinensis"] },
-    { name: "Turbo snails", kind: "inv", qty: 5, role: "Algae grazers", color: "#A3A380", art: "turbo", wiki: ["Turbo fluctuosus", "Turbo (gastropod)"] },
+    { name: "Ocellaris clownfish", kind: "fish", qty: 2, role: "Hosts near the rockwork", color: "#F97316", art: "clown", wiki: ["Ocellaris clownfish"], ageAtAdd: 6, addedMonthsAgo: 14, health: "good", healthNote: "Bright colour, eating well and hosting the anemone." },
+    { name: "Yellow watchman goby", kind: "fish", qty: 1, role: "Sand dweller", color: "#FACC15", art: "goby", wiki: ["Yellow prawn-goby", "Cryptocentrus cinctus"], ageAtAdd: 8, addedMonthsAgo: 11, health: "good", healthNote: "Keeps its burrow tidy and comes out at feeding time." },
+    { name: "Banggai cardinalfish", kind: "fish", qty: 3, role: "Hovers mid-water", color: "#CBD5E1", art: "cardinal", wiki: ["Banggai cardinalfish"], ageAtAdd: 5, addedMonthsAgo: 4, health: "watch", healthNote: "One of the three is hiding more than usual. Watch that it eats at each feeding." },
+    { name: "Skunk cleaner shrimp", kind: "inv", qty: 1, role: "Cleaner", color: "#F43F5E", art: "cleaner", wiki: ["Lysmata amboinensis"], ageAtAdd: 4, addedMonthsAgo: 9, health: "good", healthNote: "Moulted last month, which is a healthy sign." },
+    { name: "Turbo snails", kind: "inv", qty: 5, role: "Algae grazers", color: "#A3A380", art: "turbo", wiki: ["Turbo fluctuosus", "Turbo (gastropod)"], ageAtAdd: 6, addedMonthsAgo: 9, health: "good", healthNote: "All five active on the glass and rock." },
   ],
   fresh: [
-    { name: "Neon tetra", kind: "fish", qty: 10, role: "Schooling, mid-water", color: "#38BDF8", art: "neon", wiki: ["Neon tetra"] },
-    { name: "Panda corydoras", kind: "fish", qty: 6, role: "Bottom forager", color: "#E2E8F0", art: "panda", wiki: ["Corydoras panda", "Corydoras"] },
-    { name: "Bristlenose pleco", kind: "fish", qty: 1, role: "Algae grazer", color: "#78716C", art: "pleco", wiki: ["Ancistrus", "Ancistrus cirrhosus"] },
-    { name: "Amano shrimp", kind: "inv", qty: 4, role: "Clean-up crew", color: "#94A3B8", art: "amano", wiki: ["Caridina multidentata"] },
-    { name: "Nerite snails", kind: "inv", qty: 3, role: "Glass and rock grazers", color: "#B45309", art: "nerite", wiki: ["Vittina natalensis", "Zebra nerite", "Neritidae"] },
+    { name: "Neon tetra", kind: "fish", qty: 10, role: "Schooling, mid-water", color: "#38BDF8", art: "neon", wiki: ["Neon tetra"], ageAtAdd: 4, addedMonthsAgo: 10, health: "good", healthNote: "Schooling tightly with strong colour." },
+    { name: "Panda corydoras", kind: "fish", qty: 6, role: "Bottom forager", color: "#E2E8F0", art: "panda", wiki: ["Corydoras panda", "Corydoras"], ageAtAdd: 6, addedMonthsAgo: 10, health: "good", healthNote: "Busy on the sand with full barbels." },
+    { name: "Bristlenose pleco", kind: "fish", qty: 1, role: "Algae grazer", color: "#78716C", art: "pleco", wiki: ["Ancistrus", "Ancistrus cirrhosus"], ageAtAdd: 7, addedMonthsAgo: 18, health: "watch", healthNote: "Fin edges slightly ragged. Your technician will check the water flow next visit." },
+    { name: "Amano shrimp", kind: "inv", qty: 4, role: "Clean-up crew", color: "#94A3B8", art: "amano", wiki: ["Caridina multidentata"], ageAtAdd: 3, addedMonthsAgo: 8, health: "good", healthNote: "All four grazing and moulting normally." },
+    { name: "Nerite snails", kind: "inv", qty: 3, role: "Glass and rock grazers", color: "#B45309", art: "nerite", wiki: ["Vittina natalensis", "Zebra nerite", "Neritidae"], ageAtAdd: 5, addedMonthsAgo: 8, health: "good", healthNote: "Active, with no shell damage." },
   ],
 };
+/** The customer's own animals of one species, as shown when they tap one: estimated age, time in the tank, health. */
+export function fishRecord(c: Critter) {
+  const months = (n: number) => {
+    const y = Math.floor(n / 12), m = n % 12;
+    return [y ? `${y} year${y > 1 ? "s" : ""}` : "", m ? `${m} month${m > 1 ? "s" : ""}` : ""].filter(Boolean).join(" ") || "Under a month";
+  };
+  const since = new Date(); since.setMonth(since.getMonth() - c.addedMonthsAgo);
+  return {
+    age: "About " + months(c.ageAtAdd + c.addedMonthsAgo).toLowerCase().replace(/^under/, "under"),
+    since: `${MON[since.getMonth()]} ${since.getFullYear()}`,
+    inTank: months(c.addedMonthsAgo),
+    health: c.health,
+    note: c.healthNote,
+    qty: c.qty,
+  };
+}
+export type FishRecord = ReturnType<typeof fishRecord>;
+
 export type Idea = { id: string; name: string; sci: string; minGal: number; fit: "good" | "caution"; color: string; note: string; tags: string[]; wiki: string[] };
 export const IDEAS: Record<"fresh" | "salt", Idea[]> = {
   salt: [

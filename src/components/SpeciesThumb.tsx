@@ -16,13 +16,13 @@ import { FishView, useFishViewer } from "./FishViewer";
 type Species = { name: string; art: string; wiki: string[] };
 
 /** Tap-to-zoom wrapper: pass `zoom` to make the thumbnail open the full-screen viewer. */
-export function SpeciesThumb(props: { species: Species; own?: string; size?: number; round?: boolean; zoom?: boolean | { extra?: FishView["extra"] } }) {
+export function SpeciesThumb(props: { species: Species; own?: string; size?: number; round?: boolean; zoom?: boolean | { extra?: FishView["extra"]; mine?: FishView["mine"] } }) {
   const openFish = useFishViewer();
   const { species, own, size = 60, zoom } = props;
   if (!zoom) return <Thumb {...props} />;
   return (
     <Press
-      onPress={() => openFish({ name: species.name, art: species.art, wiki: species.wiki, own, extra: typeof zoom === "object" ? zoom.extra : undefined })}
+      onPress={() => openFish({ name: species.name, art: species.art, wiki: species.wiki, own, extra: typeof zoom === "object" ? zoom.extra : undefined, mine: typeof zoom === "object" ? zoom.mine : undefined })}
       scaleTo={0.94}
       accessibilityLabel={`View photo of ${species.name}`}
     >

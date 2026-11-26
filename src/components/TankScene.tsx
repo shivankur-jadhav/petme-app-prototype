@@ -7,7 +7,7 @@
 // tail beat and tilt), a handful of swaying plant clumps, and one shared clock for every resting
 // animal's idle motion (gobies hop, plecos breathe, shrimp rock).
 import React, { useEffect, useMemo, useState } from "react";
-import { StyleSheet, View, ViewStyle } from "react-native";
+import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient as SvgGrad, Path, Rect, Stop } from "react-native-svg";
 import { CritterArt } from "./Icon";
@@ -54,7 +54,7 @@ const MAX_SWIMMERS = 4;
  * of snapping round), a quick tail-beat wiggle, gentle bobbing and meandering, and the body tilting
  * nose-up when rising and nose-down when diving.
  */
-function Swimmer({ art, x0, x1, y, size, dur, delay = 0, bob = 4, meander = 0 }: { art: string; x0: number; x1: number; y: number; size: number; dur: number; delay?: number; bob?: number; meander?: number }) {
+function Swimmer({ art, x0, x1, y, size, dur, delay = 0, bob = 4, meander = 0, label, onPress }: { art: string; x0: number; x1: number; y: number; size: number; dur: number; delay?: number; bob?: number; meander?: number; label: string; onPress?: () => void }) {
   // Starts just past the turn so the fish is visible (not mid-turn) while waiting for its delay.
   const p = useSharedValue(0.06);
   useEffect(() => {
@@ -83,7 +83,9 @@ function Swimmer({ art, x0, x1, y, size, dur, delay = 0, bob = 4, meander = 0 }:
   });
   return (
     <Animated.View style={[{ position: "absolute", left: 0, top: y - (size * 32) / 48 / 2 }, a]}>
-      <CritterArt art={art} width={size} />
+      <Pressable onPress={onPress} disabled={!onPress} hitSlop={12} accessibilityRole="button" accessibilityLabel={label}>
+        <CritterArt art={art} width={size} />
+      </Pressable>
     </Animated.View>
   );
 }
@@ -99,7 +101,7 @@ const IDLE: Record<string, { bob: number; breathe: number; rock: number }> = {
 };
 
 /** A resting animal, idling on one clock shared by all resting animals (each at its own phase). */
-function Rester({ art, x, y, size, flip, clock, phase, ground }: { art: string; x: number; y: number; size: number; flip?: boolean; clock: { value: number }; phase: number; ground: boolean }) {
+function Rester({ art, x, y, size, flip, clock, phase, ground, label, onPress }: { art: string; x: number; y: number; size: number; flip?: boolean; clock: { value: number }; phase: number; ground: boolean; label: string; onPress?: () => void }) {
   const m = IDLE[art] || { bob: 0.5, breathe: 0.02, rock: 1 };
   const h = (size * 32) / 48;
   const a = useAnimatedStyle(() => {
@@ -116,8 +118,10 @@ function Rester({ art, x, y, size, flip, clock, phase, ground }: { art: string; 
   return (
     <>
       {ground ? <View pointerEvents="none" style={{ position: "absolute", left: x - size * 0.36, top: y - 2, width: size * 0.72, height: 4, borderRadius: size, backgroundColor: "rgba(4,14,26,0.16)" }} /> : null}
-      <Animated.View pointerEvents="none" style={[{ position: "absolute", left: x - size / 2, top: y - h, transformOrigin: "50% 100%" } as any, a]}>
-        <CritterArt art={art} width={size} />
+      <Animated.View pointerEvents="box-none" style={[{ position: "absolute", left: x - size / 2, top: y - h, transformOrigin: "50% 100%" } as any, a]}>
+        <Pressable onPress={onPress} disabled={!onPress} hitSlop={10} accessibilityRole="button" accessibilityLabel={label}>
+          <CritterArt art={art} width={size} />
+        </Pressable>
       </Animated.View>
     </>
   );
@@ -305,7 +309,8 @@ function SceneLayer({ layer, w, h, sc, offX, offY }: { layer: Layer; w: number; 
 
 /* ---------------- the tank ---------------- */
 
-export function TankScene({ type, size = "m", stock, height = 210 }: { type: TankType; size?: SizeId; stock?: Critter[]; height?: number }) {
+/** `onFish`: tapping a drawn animal opens its details. */
+export function TankScene({ type, size = "m", stock, height = 210, onFish }: { type: TankType; size?: SizeId; stock?: Critter[]; height?: number; onFish?: (c: Critter) => void }) {
   const salt = chemOf(type) === "salt";
   const look = salt ? "salt" : type === "planted" ? "planted" : "fresh";
   const animals = stock || STOCK[chemOf(type)];
@@ -325,19 +330,19 @@ export function TankScene({ type, size = "m", stock, height = 210 }: { type: Tan
 
   // Lay out each animal from its species' places, keeping the swimming count inside the budget.
   let swimmers = 0;
-  const placed: { art: string; p: Place; key: string }[] = [];
+  const placed: { art: string; p: Place; key: string; c: Critter }[] = [];
   animals.forEach((c) => {
     const spots = PLACES[c.art] || [{ mode: "swim", x0: 40, x1: 360, y: 110, size: 26, dur: 7000 } as Swim];
     spots.slice(0, Math.max(1, Math.min(c.qty, spots.length))).forEach((p, i) => {
       if (p.mode === "swim") { if (swimmers >= MAX_SWIMMERS) return; swimmers++; }
-      placed.push({ art: c.art, p, key: c.art + i });
+      placed.push({ art: c.art, p, key: c.art + i, c });
     });
   });
   const names = animals.map((c) => c.name.toLowerCase()).join(", ");
 
   return (
-    <View style={{ height, overflow: "hidden" }} onLayout={(e) => setW(e.nativeEvent.layout.width)}
-      accessible accessibilityRole="image" accessibilityLabel={`Drawing of your ${salt ? "reef" : look === "planted" ? "planted" : "freshwater"} tank with ${names}`}>
+    <View style={{ height, overflow: "hidden" }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      <View accessible accessibilityRole="image" accessibilityLabel={`Drawing of your ${salt ? "reef" : look === "planted" ? "planted" : "freshwater"} tank with ${names}`} style={StyleSheet.absoluteFill} />
       <Svg width="100%" height={height} viewBox={`0 0 ${VW} ${height}`} preserveAspectRatio="none" style={StyleSheet.absoluteFill}>
         <Defs>
           <SvgGrad id={`water-${look}`} x1="0" y1="0" x2="0" y2="1">
@@ -349,10 +354,10 @@ export function TankScene({ type, size = "m", stock, height = 210 }: { type: Tan
         <Rect x={0} y={0} width={VW} height={height} fill={`url(#water-${look})`} />
       </Svg>
       {w ? layers.map((l, i) => <SceneLayer key={look + i} layer={l} w={w} h={height} sc={sc} offX={offX} offY={offY} />) : null}
-      {w ? placed.map(({ art, p, key }) => p.mode === "swim" ? (
-        <Swimmer key={key} art={art} x0={px(p.x0)} x1={px(p.x1)} y={py(p.y)} size={p.size * k} dur={p.dur} delay={p.delay} bob={p.bob} meander={(p.meander || 0) * sc} />
+      {w ? placed.map(({ art, p, key, c }) => p.mode === "swim" ? (
+        <Swimmer key={key} art={art} label={`${c.name}, tap for details`} onPress={onFish ? () => onFish(c) : undefined} x0={px(p.x0)} x1={px(p.x1)} y={py(p.y)} size={p.size * k} dur={p.dur} delay={p.delay} bob={p.bob} meander={(p.meander || 0) * sc} />
       ) : (
-        <Rester key={key} art={art} x={px(p.x)} y={py(p.y)} size={p.size * k} flip={p.flip} clock={clock} phase={key.length * 1.7 + p.x * 0.05} ground={p.y >= 188} />
+        <Rester key={key} art={art} label={`${c.name}, tap for details`} onPress={onFish ? () => onFish(c) : undefined} x={px(p.x)} y={py(p.y)} size={p.size * k} flip={p.flip} clock={clock} phase={key.length * 1.7 + p.x * 0.05} ground={p.y >= 188} />
       )) : null}
     </View>
   );

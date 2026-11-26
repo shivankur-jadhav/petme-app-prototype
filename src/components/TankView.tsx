@@ -178,10 +178,10 @@ function DriftPhoto({ uri, height }: { uri: string; height: number }) {
  * their livestock swimming), the water life on top, and a small "Film your tank" pill in the
  * top-right corner (open water, so it never covers the animals resting on the bottom).
  */
-function DrawnTank({ type, size, stock, height, onAdd, busy }: { type: TankType; size?: SizeId; stock?: Critter[]; height: number; onAdd?: (source: "camera" | "library") => void; busy?: boolean }) {
+function DrawnTank({ type, size, stock, height, onAdd, busy, onFish }: { type: TankType; size?: SizeId; stock?: Critter[]; height: number; onAdd?: (source: "camera" | "library") => void; busy?: boolean; onFish?: (c: Critter) => void }) {
   return (
     <View style={{ height }}>
-      <TankScene type={type} size={size} stock={stock} height={height} />
+      <TankScene type={type} size={size} stock={stock} height={height} onFish={onFish} />
       <WaterLife height={height} />
       {onAdd ? (
         <Press onPress={() => onAdd("camera")} disabled={busy} accessibilityRole="button" accessibilityLabel="Record a video of your tank" style={s.filmPill}>
@@ -207,8 +207,8 @@ export const mediaCaption = (m: TankMedia) =>
   `${m.by === "technician" ? "Recorded at your visit" : "Your " + (m.kind === "video" ? "video" : "photo")} · ${fmtDate(iso(new Date(m.addedAt)), false)}`;
 
 export function TankView({
-  type, size, stock, media, height = 210, tags, footer, onAdd, busy,
-}: { type: TankType; size?: SizeId; stock?: Critter[]; media?: TankMedia; height?: number; tags?: React.ReactNode; footer?: React.ReactNode; onAdd?: (source: "camera" | "library") => void; busy?: boolean }) {
+  type, size, stock, media, height = 210, tags, footer, onAdd, busy, onFish,
+}: { type: TankType; size?: SizeId; stock?: Critter[]; onFish?: (c: Critter) => void; media?: TankMedia; height?: number; tags?: React.ReactNode; footer?: React.ReactNode; onAdd?: (source: "camera" | "library") => void; busy?: boolean }) {
   const uri = useMediaUri(media?.uri); // on the web, saved files are looked up in the browser's storage
   return (
     <View style={s.tank}>
@@ -221,7 +221,7 @@ export function TankView({
         ) : media?.kind === "image" && uri ? (
           <DriftPhoto key={uri} uri={uri} height={height} />
         ) : (
-          <DrawnTank type={type} size={size} stock={stock} height={height} onAdd={onAdd} busy={busy} />
+          <DrawnTank type={type} size={size} stock={stock} height={height} onAdd={onAdd} busy={busy} onFish={onFish} />
         )}
         {/* light falling from the hood (alive when there is a video or photo), a diagonal reflection on the glass, and the glass edges */}
         {media && uri ? <WaterLife height={height} /> : null}

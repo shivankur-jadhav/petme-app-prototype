@@ -8,10 +8,12 @@ import { Badge, Btn, Chips, Field, Label, Panel, Press, Screen, SecHeader, Segme
 import { TankPill, TankThumb, TankView, mediaCaption } from "../components/TankView";
 import { forgetMedia, latestTankMedia, pickTankMedia } from "../media";
 import { MetricGrid, TabId } from "../components/visuals";
+import { useFishViewer } from "../components/FishViewer";
 import { useStore } from "../store";
-import { RECUR, SAMPLE_READINGS, SERVICES, SIZES, STOCK, TYPES, WINDOWS, by, chemOf, fmtDate, iso, metricsFor, money, todayIso, forTank, SizeId, Tank, TankType } from "../data";
+import { RECUR, SAMPLE_READINGS, SERVICES, SIZES, STOCK, TYPES, WINDOWS, by, chemOf, fmtDate, iso, metricsFor, money, todayIso, forTank, fishRecord, SizeId, Tank, TankType } from "../data";
 
 export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void; openReport: (id: string) => void }) {
+  const openFish = useFishViewer();
   const { tank, tanks, setTank, selectTank, addTank, removeTank, bookings, toast } = useStore();
   const mine = useMemo(() => bookings.filter((b) => forTank(b, tank)), [bookings, tank.id, tank.name]);
   const switchTo = (t: Tank) => { if (t.id === tank.id) return; haptic.tap(); selectTank(t.id); setEditing(false); setVideoPanel(false); setPhotoFor(null); setFilter("all"); };
@@ -123,6 +125,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
           type={tank.type}
           size={tank.size}
           stock={stock}
+          onFish={(c) => { haptic.tap(); openFish({ name: c.name, art: c.art, wiki: c.wiki, own: fishPhotos[c.name]?.uri, extra: [{ label: `In your tank: ${c.qty}` }], mine: fishRecord(c) }); }}
           onAdd={addMedia}
           busy={busy}
           media={media}
@@ -217,7 +220,7 @@ export default function TanksScreen({ go, openReport }: { go: (t: TabId) => void
             <Animated.View key={tank.type + s.name} entering={FadeIn.delay(i * 40)} exiting={FadeOut.duration(120)} layout={layout}
               style={{ paddingVertical: 12, gap: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.hair }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                <SpeciesThumb species={s} own={fishPhotos[s.name]?.uri} size={60} zoom={{ extra: [{ label: `In your tank: ${s.qty}` }] }} />
+                <SpeciesThumb species={s} own={fishPhotos[s.name]?.uri} size={60} zoom={{ extra: [{ label: `In your tank: ${s.qty}` }], mine: fishRecord(s) }} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={T.h3}>{s.name}</Text>
                   <Text style={T.small}>{s.role}</Text>
