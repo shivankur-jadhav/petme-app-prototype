@@ -9,6 +9,14 @@ PetMe is an at-home aquarium service business in Toronto/GTA. This Expo React Na
 - `npm run typecheck` — TypeScript check
 - After adding any Expo or React Native package, use `npx expo install <pkg>`, never plain `npm install`, so versions match the SDK.
 
+## Browser test link (artifact) — update it after every change
+The owner tests in the browser at https://claude.ai/artifact/EYEiToAXDcHxjfgnFFbnXH (shared with anyone who has the link; viewers get updates live). After every change that is committed:
+1. `npm run typecheck`
+2. `node scripts/build-artifact.mjs <scratch folder>` (offline: prefix `EXPO_OFFLINE=1`). Keep the same scratch folder between builds so `files.json` removes the previous code file.
+3. Publish with the Artifact tool: `file_path` `<scratch>/petme.html`, `root` `<scratch>/site`, `files` from `<scratch>/files.json`, and `url` set to the link above (from a new session, read the artifact first). Never pass `icon` or `capabilities` on these updates.
+4. Tell the owner it is live and what to try. No `git pull` is needed for the browser link.
+Web differences: no haptics; the camera opens through the phone's own camera app (file input), and saved media lives in the browser (`src/webMedia.ts`).
+
 ## Stack
 Expo (managed, latest SDK, must keep working in Expo Go — no custom native modules), TypeScript (non-strict), react-native-reanimated for all motion, react-native-svg for icons and art, expo-linear-gradient, expo-blur, expo-haptics, AsyncStorage. No navigation library: `App.tsx` switches tabs and overlays the service report.
 
