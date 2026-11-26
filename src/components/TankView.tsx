@@ -1,6 +1,6 @@
 // The customer's tank, drawn as a real aquarium: a hood with a light bar, glass with reflections and a
 // base trim. Inside it plays the customer's own tank video on a silent loop, shows their photo with a
-// slow drift. Over either, gentle water life: light sweeping through the water, the hood light
+// slow drift. Over either, and in the empty tank too, gentle water life: light sweeping through the water, the hood light
 // breathing, and a few bubbles rising up the glass. Until one is added, the empty tank asks the
 // customer to film theirs.
 // The tank is underwater art, so it stays dark in both themes.
@@ -11,6 +11,7 @@ import Animated, { Easing, FadeIn, interpolate, useAnimatedStyle, useSharedValue
 type Transform = NonNullable<ViewStyle["transform"]>;
 import { LinearGradient } from "expo-linear-gradient";
 import { VideoView, useVideoPlayer } from "expo-video";
+import Svg, { Path } from "react-native-svg";
 import { Icon } from "./Icon";
 import { Btn, Press } from "./ui";
 import { useMediaUri } from "../webMedia";
@@ -34,35 +35,73 @@ const TANK = {
   pillSub: "rgba(226,242,255,0.75)",
   water: ["#0f3a5c", "#0a2a45", "#071d33"] as const,
   sweep: "rgba(224,242,254,0.13)",
+  sweep2: "rgba(186,230,253,0.09)",
+  surface: "rgba(224,242,254,0.35)",
+  speck: "rgba(224,242,254,0.9)",
   bubble: "rgba(224,242,254,0.75)",
   bubbleFill: "rgba(224,242,254,0.12)",
   ring: "rgba(186,230,253,0.35)",
 };
 
-/** Water life over the customer's video or photo: one light sweep, a breathing glow, three bubbles. */
+/**
+ * Water life: makes the tank feel alive, over the customer's video or photo and in the empty tank.
+ * A rippling surface, two light bands drifting at different speeds, the hood light breathing,
+ * bubbles rising up the glass and a few specks floating in the water. All on the UI thread; it
+ * stands still when the phone has Reduce Motion on (Reanimated's default).
+ */
 function WaterLife({ height }: { height: number }) {
   const [w, setW] = useState(0);
   const sweep = useSharedValue(0);
+  const sweep2 = useSharedValue(0);
   const glow = useSharedValue(0.6);
+  const wave = useSharedValue(0);
   useEffect(() => {
     sweep.value = withRepeat(withTiming(1, { duration: 9000, easing: Easing.inOut(Easing.sin) }), -1, true);
+    sweep2.value = withDelay(1200, withRepeat(withTiming(1, { duration: 13000, easing: Easing.inOut(Easing.sin) }), -1, true));
     glow.value = withRepeat(withSequence(withTiming(1, { duration: 2800 }), withTiming(0.55, { duration: 2800 })), -1);
+    wave.value = withRepeat(withTiming(1, { duration: 4200, easing: Easing.linear }), -1, false);
   }, []);
   const band = useAnimatedStyle(() => ({ transform: [{ translateX: -w * 0.6 + sweep.value * w * 1.2 }, { rotate: "18deg" }] as Transform }));
+  const band2 = useAnimatedStyle(() => ({ transform: [{ translateX: w * 0.7 - sweep2.value * w * 1.1 }, { rotate: "-12deg" }] as Transform }));
   const top = useAnimatedStyle(() => ({ opacity: glow.value }));
+  const surface = useAnimatedStyle(() => ({ transform: [{ translateX: -wave.value * 80 }] as Transform }));
+  // one wave period is 80 points, so sliding by 80 loops seamlessly
+  const ripple = w ? "M0 6" + " q20 -5 40 0 t40 0".repeat(Math.ceil((w + 80) / 80)) : "";
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <Animated.View style={[{ position: "absolute", left: 0, right: 0, top: 0, height: height * 0.4 }, top]}>
         <LinearGradient colors={[TANK.glow, TANK.glowFade]} style={StyleSheet.absoluteFill} />
       </Animated.View>
       {w ? (
-        <Animated.View style={[{ position: "absolute", top: -height * 0.3, width: w * 0.35, height: height * 1.6 }, band]}>
-          <LinearGradient colors={[TANK.shineFade, TANK.sweep, TANK.shineFade]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
-        </Animated.View>
+        <>
+          <Animated.View style={[{ position: "absolute", top: -height * 0.3, width: w * 0.35, height: height * 1.6 }, band]}>
+            <LinearGradient colors={[TANK.shineFade, TANK.sweep, TANK.shineFade]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
+          </Animated.View>
+          <Animated.View style={[{ position: "absolute", top: -height * 0.3, width: w * 0.22, height: height * 1.6 }, band2]}>
+            <LinearGradient colors={[TANK.shineFade, TANK.sweep2, TANK.shineFade]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
+          </Animated.View>
+          <Animated.View style={[{ position: "absolute", left: 0, top: 0, width: w + 80, height: 12 }, surface]}>
+            <Svg width={w + 80} height={12}><Path d={ripple} stroke={TANK.surface} strokeWidth={1.4} fill="none" /></Svg>
+          </Animated.View>
+          {[0.86, 0.9, 0.12].map((x, i) => <Bubble key={i} x={w * x + (i === 1 ? 6 : 0)} delay={i * 1500} rise={height - 24} size={i === 1 ? 4 : 6} />)}
+          {[[0.22, 0.55], [0.4, 0.3], [0.58, 0.7], [0.7, 0.42], [0.32, 0.82]].map(([x, y], i) => <Speck key={i} x={w * x} y={height * y} delay={i * 700} />)}
+        </>
       ) : null}
-      {w ? [0.86, 0.9, 0.12].map((x, i) => <Bubble key={i} x={w * x + (i === 1 ? 6 : 0)} delay={i * 1500} rise={height - 24} size={i === 1 ? 4 : 6} />) : null}
     </View>
   );
+}
+
+/** A tiny speck drifting slowly in the water. */
+function Speck({ x, y, delay }: { x: number; y: number; delay: number }) {
+  const p = useSharedValue(0);
+  useEffect(() => {
+    p.value = withDelay(delay, withRepeat(withTiming(1, { duration: 7000, easing: Easing.inOut(Easing.sin) }), -1, true));
+  }, []);
+  const a = useAnimatedStyle(() => ({
+    opacity: interpolate(p.value, [0, 0.5, 1], [0.15, 0.55, 0.15]),
+    transform: [{ translateY: -p.value * 14 }, { translateX: Math.sin(p.value * 3.1) * 6 }] as Transform,
+  }));
+  return <Animated.View style={[{ position: "absolute", left: x, top: y, width: 2.5, height: 2.5, borderRadius: 2, backgroundColor: TANK.speck }, a]} />;
 }
 
 function Bubble({ x, delay, rise, size }: { x: number; delay: number; rise: number; size: number }) {
@@ -135,6 +174,7 @@ function FilmYourTank({ height, onAdd, busy }: { height: number; onAdd?: (source
   return (
     <View style={[s.empty, { height }]}>
       <LinearGradient colors={TANK.water} style={StyleSheet.absoluteFill} />
+      <WaterLife height={height} />
       <View style={s.emptyIcon}><Icon name="video" size={20} color={TANK.pillText} width={1.8} /></View>
       <Text style={s.emptyTitle}>Film your tank</Text>
       <Text style={s.emptyText}>Your video plays here on a silent loop.</Text>
@@ -181,7 +221,7 @@ export function TankView({
           <FilmYourTank height={height} onAdd={onAdd} busy={busy} />
         )}
         {/* light falling from the hood (alive when there is a video or photo), a diagonal reflection on the glass, and the glass edges */}
-        {media && uri ? <WaterLife height={height} /> : <LinearGradient pointerEvents="none" colors={[TANK.glow, TANK.glowFade]} style={[s.fill, { height: height * 0.35 }]} />}
+        {media && uri ? <WaterLife height={height} /> : null}
         <LinearGradient pointerEvents="none" colors={[TANK.shineFade, TANK.shine, TANK.shineFade]} locations={[0.3, 0.45, 0.6]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.fill} />
         {media ? <LinearGradient pointerEvents="none" colors={[TANK.shade, TANK.shadeFade]} style={[s.fill, { height: 64 }]} /> : null}
         <View pointerEvents="none" style={s.edges} />
