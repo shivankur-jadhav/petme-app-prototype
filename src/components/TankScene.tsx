@@ -155,7 +155,16 @@ function Anemone({ x, y }: { x: number; y: number }) {
 }
 
 /** A scene is drawn as layers, back to front. A "sway" layer pivots gently around its base point. */
-type Layer = { el: React.ReactNode; sway?: { x: number; y: number; deg: number; dur: number } };
+// `bend` skews instead of rotating: the base stays put and the top moves, like a plant in a current.
+// `delay` offsets each clump so nothing moves in lockstep.
+type Layer = { el: React.ReactNode; sway?: { x: number; y: number; deg: number; dur: number; bend?: boolean; delay?: number } };
+
+// Small deterministic "random" so plants look natural but draw the same every time.
+const rnd = (i: number, salt = 1) => { const v = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453; return v - Math.floor(v); };
+const mix = (a: string, b: string, t: number) => {
+  const pa = [1, 3, 5].map((k) => parseInt(a.slice(k, k + 2), 16)), pb = [1, 3, 5].map((k) => parseInt(b.slice(k, k + 2), 16));
+  return "#" + pa.map((v, k) => Math.round(v + (pb[k] - v) * t).toString(16).padStart(2, "0")).join("");
+};
 
 function reefLayers(): Layer[] {
   return [
@@ -230,49 +239,143 @@ function Sword({ x, y, k = 1 }: { x: number; y: number; k?: number }) {
   );
 }
 
-function Stem({ x, h, color, leaf }: { x: number; h: number; color: string; leaf: string }) {
-  const n = Math.floor(h / 10);
+/** Eelgrass: long ribbon blades curling at the tips. */
+function Vallis({ x0, x1, n, h, salt }: { x0: number; x1: number; n: number; h: number; salt: number }) {
+  const greens = ["#3f9d5a", "#58b56e", "#2f7d4a", "#6cc47f", "#4a9a52"];
   return (
     <G>
-      <Path d={`M${x} 200c-2-${h / 3} 3-${(h * 2) / 3} 0-${h}`} stroke={color} strokeWidth={1.6} fill="none" />
       {Array.from({ length: n }).map((_, i) => {
-        const yy = 196 - i * 10;
-        return <G key={i}><Ellipse cx={x - 5} cy={yy} rx={5} ry={2} fill={leaf} /><Ellipse cx={x + 5} cy={yy - 4} rx={5} ry={2} fill={leaf} /></G>;
+        const x = x0 + ((x1 - x0) * i) / Math.max(1, n - 1) + (rnd(i, salt) - 0.5) * 6;
+        const hh = h * (0.7 + rnd(i, salt + 1) * 0.35), lean = (rnd(i, salt + 2) - 0.5) * 34;
+        return <Path key={i} d={`M${x} 202C${x + lean * 0.2} ${202 - hh * 0.4} ${x + lean * 0.7} ${202 - hh * 0.75} ${x + lean} ${202 - hh}`}
+          stroke={greens[i % greens.length]} strokeWidth={3 + rnd(i, salt + 3) * 1.4} strokeLinecap="round" fill="none" opacity={0.92} />;
       })}
     </G>
   );
 }
 
+/** Anubias: broad dark leaves with a pale midrib, growing on wood. */
+function Anubias({ x, y, k = 1 }: { x: number; y: number; k?: number }) {
+  const leaves = [[-42, 1], [-14, 1.15], [16, 1.05], [44, 0.9]];
+  return (
+    <G transform={`translate(${x} ${y}) scale(${k})`}>
+      {leaves.map(([a, s], i) => (
+        <G key={i} transform={`rotate(${a}) scale(${s})`}>
+          <Path d="M0 0v-10" stroke="#2f6b3a" strokeWidth={1.6} />
+          <Path d="M0 -8c-9-4-12-18-5-28 3-4 7-4 10 0 7 10 4 24-5 28z" fill={i % 2 ? "#1f6b35" : "#185c2d"} />
+          <Path d="M0 -10v-24" stroke="#4f9a5e" strokeWidth={0.9} />
+        </G>
+      ))}
+    </G>
+  );
+}
+
+/** Java moss: soft fuzzy tufts. */
+function Moss({ pts }: { pts: [number, number, number][] }) {
+  return (
+    <G>
+      {pts.flatMap(([cx, cy, r], j) => Array.from({ length: 7 }).map((_, i) => (
+        <Circle key={`${j}-${i}`} cx={cx + (rnd(i, j + 5) - 0.5) * r * 2} cy={cy + (rnd(i, j + 9) - 0.5) * r} r={r * (0.35 + rnd(i, j + 13) * 0.3)} fill={i % 3 ? "#4d7c0f" : "#65a30d"} opacity={0.9} />
+      )))}
+    </G>
+  );
+}
+
+/** Cryptocoryne: a low rosette of wavy bronze-green leaves. */
+function Crypt({ x, y, k = 1 }: { x: number; y: number; k?: number }) {
+  const cols = ["#6b7d2c", "#8a7a32", "#5d7a33", "#9a7b3c", "#73862f"];
+  return (
+    <G transform={`translate(${x} ${y}) scale(${k})`}>
+      {[-55, -30, -10, 10, 32, 56].map((a, i) => (
+        <Path key={i} transform={`rotate(${a})`} d="M0 0c-5-6-7-16-3-26 1-3 3-3 4 0 4 10 3 20-1 26z" fill={cols[i % cols.length]} />
+      ))}
+    </G>
+  );
+}
+
+/** Rotala: a feathery bush of slender stems, green at the base turning soft pink at the tips. */
+function Rotala({ x0, x1, n }: { x0: number; x1: number; n: number }) {
+  return (
+    <G>
+      {Array.from({ length: n }).map((_, i) => {
+        const x = x0 + ((x1 - x0) * i) / (n - 1) + (rnd(i, 21) - 0.5) * 8;
+        const h = 100 + rnd(i, 22) * 55, lean = (rnd(i, 23) - 0.5) * 18, leaves = Math.floor(h / 7);
+        return (
+          <G key={i}>
+            <Path d={`M${x} 200Q${x + lean * 0.3} ${200 - h * 0.5} ${x + lean} ${200 - h}`} stroke="#4f7d3a" strokeWidth={1.1} fill="none" />
+            {Array.from({ length: leaves }).map((_, j) => {
+              const t = j / leaves, yy = 200 - h * t, xx = x + lean * t * t;
+              const c = t < 0.6 ? mix("#2f855a", "#5fb36b", t / 0.6) : mix("#5fb36b", "#f2a7b8", (t - 0.6) / 0.4);
+              return <G key={j}><Ellipse cx={xx - 3.4} cy={yy} rx={3.4} ry={1.2} fill={c} transform={`rotate(-20 ${xx - 3.4} ${yy})`} /><Ellipse cx={xx + 3.4} cy={yy - 2} rx={3.4} ry={1.2} fill={c} transform={`rotate(20 ${xx + 3.4} ${yy - 2})`} /></G>;
+            })}
+          </G>
+        );
+      })}
+    </G>
+  );
+}
+
+/** Floating plants at the surface, with roots trailing down into the water. */
+function Floaters({ x0, x1 }: { x0: number; x1: number }) {
+  const pads = Array.from({ length: 9 }).map((_, i) => [x0 + ((x1 - x0) * i) / 8 + (rnd(i, 31) - 0.5) * 8, 7 + rnd(i, 32) * 3, 5 + rnd(i, 33) * 3]);
+  return (
+    <G>
+      {pads.map(([x, y, r], i) => <Path key={"r" + i} d={`M${x} ${y + 1}q${(rnd(i, 34) - 0.5) * 6} ${10 + r * 2} ${(rnd(i, 35) - 0.5) * 4} ${18 + r * 3}`} stroke="#d9f99d" strokeWidth={0.7} fill="none" opacity={0.45} />)}
+      {pads.map(([x, y, r], i) => <G key={"p" + i}><Ellipse cx={x} cy={y} rx={r} ry={r * 0.36} fill={i % 2 ? "#65a30d" : "#7cb518"} /><Ellipse cx={x - r * 0.2} cy={y - r * 0.08} rx={r * 0.5} ry={r * 0.14} fill="#a3d65c" opacity={0.6} /></G>)}
+    </G>
+  );
+}
+
 function freshLayers(planted: boolean): Layer[] {
-  const stemsL = [18, 34, 50, 66], stemsR = [300, 316, 332, 348];
-  const stem = (x: number, i: number) => <Stem key={x} x={x} h={110 + ((i * 17) % 40)} color={i % 3 === 0 ? "#b91c1c" : "#15803d"} leaf={i % 3 === 0 ? "#f87171" : "#4ade80"} />;
   return [
-    planted
-      ? { sway: { x: 42, y: 200, deg: 2.5, dur: 3800 }, el: <G>{stemsL.map((x, i) => stem(x, i))}</G> }
-      : { sway: { x: 24, y: 200, deg: 3, dur: 3400 }, el: <Path d="M24 200c-4-50 6-90 0-150M34 200c6-40 14-70 10-130M14 200c-8-36-6-70-14-100" stroke="#4ade80" strokeWidth={3} strokeLinecap="round" fill="none" opacity={0.6} /> },
-    planted
-      ? { sway: { x: 324, y: 200, deg: -2.5, dur: 4300 }, el: <G>{stemsR.map((x, i) => stem(x, i + 4))}</G> }
-      : { sway: { x: 336, y: 200, deg: -3, dur: 3900 }, el: <Path d="M330 200c4-40-6-80 2-130M342 200c8-30 18-60 14-100" stroke="#4ade80" strokeWidth={3} strokeLinecap="round" fill="none" opacity={0.6} /> },
-    { el: <Driftwood small={planted} /> },
-    // java fern tied to the wood
-    { sway: { x: 132, y: 120, deg: 4, dur: 3000 }, el: <G transform="translate(132 120)">
-      {[-50, -25, 0, 25, 50].map((a, i) => <Path key={i} transform={`rotate(${a})`} d="M0 0c-6-10-6-26 0-38 6 12 6 28 0 38z" fill={i % 2 ? "#166534" : "#15803d"} />)}
+    // soft, out-of-focus plants at the back for depth
+    { el: <G opacity={0.28}>
+      <Path d="M0 200c10-60 30-90 26-140 12 40 20 90 6 140zM60 200c6-40 22-70 30-110 6 40-2 80-10 110zM210 200c-6-40 4-70 0-96 12 30 16 64 8 96zM260 200c4-30 16-56 30-78 2 30-6 56-16 78z" fill="#0f4a3a" />
     </G> },
+    // back-left: rotala bush (planted) or tall eelgrass (freshwater)
+    planted
+      ? { sway: { x: 50, y: 200, deg: 4, dur: 4300, bend: true }, el: <Rotala x0={10} x1={96} n={9} /> }
+      : { sway: { x: 40, y: 202, deg: 6, dur: 3900, bend: true }, el: <Vallis x0={8} x1={74} n={10} h={170} salt={1} /> },
+    // back-right eelgrass, on its own rhythm
+    { sway: { x: 340, y: 202, deg: -5, dur: 5100, bend: true, delay: 900 }, el: <Vallis x0={300} x1={384} n={planted ? 11 : 9} h={planted ? 160 : 150} salt={2} /> },
+    { el: <G>
+      <Driftwood small={planted} />
+      <Moss pts={planted ? [[88, 168, 6], [118, 150, 5], [140, 132, 5]] : [[60, 178, 6], [104, 154, 6], [142, 112, 5], [160, 98, 4]]} />
+    </G> },
+    // anubias tied to the wood
+    { sway: { x: planted ? 104 : 132, y: planted ? 150 : 122, deg: 2.5, dur: 3300, delay: 400 }, el: <Anubias x={planted ? 104 : 132} y={planted ? 150 : 122} k={planted ? 0.8 : 1} /> },
     ...(planted ? [{ el: <G>
       <Path d="M176 200c-4-20 8-34 24-36 10-8 26-6 32 6 10 4 14 16 12 30z" fill="#6b7280" />
       <Path d="M186 184c8-4 16-2 22 4M204 174c8 0 14 4 18 10M214 192c6-2 12 0 16 4" stroke="#4b5563" strokeWidth={1.4} fill="none" />
+      <Moss pts={[[196, 166, 6], [222, 164, 5]]} />
     </G> }] : []),
-    { sway: { x: 316, y: 202, deg: 2.5, dur: 4600 }, el: <Sword x={316} y={202} k={planted ? 0.85 : 1} /> },
+    // Amazon sword, right-middle
+    { sway: { x: 300, y: 202, deg: 3, dur: 4700, bend: true, delay: 1500 }, el: <Sword x={300} y={202} k={planted ? 0.8 : 0.95} /> },
+    // cryptocorynes in the foreground
+    { sway: { x: 160, y: 200, deg: 2.5, dur: 3600, bend: true, delay: 600 }, el: <G>
+      <Crypt x={planted ? 150 : 168} y={200} k={1} />
+      <Crypt x={planted ? 262 : 214} y={201} k={0.8} />
+      {!planted ? <Crypt x={352} y={201} k={0.75} /> : null}
+    </G> },
+    // floating plants drifting at the surface
+    { sway: { x: 215, y: 8, deg: 1.4, dur: 6200, delay: 300 }, el: <Floaters x0={150} x1={280} /> },
     { el: planted ? (
       <G>
         <Path d="M0 192c50-4 100 2 150-1s100-5 150 0 70 3 100 0V210H0z" fill="#2a2018" />
-        <Path d={"M0 195" + "c3-3 7-3 10 0".repeat(40) + "v4H0z"} fill="#22c55e" opacity={0.85} />
+        {Array.from({ length: 110 }).map((_, i) => {
+          const x = (i * 400) / 110 + rnd(i, 41) * 3;
+          return <Circle key={i} cx={x} cy={193.5 + rnd(i, 42) * 3} r={1.6 + rnd(i, 43) * 1.3} fill={["#4ade80", "#22c55e", "#86efac", "#16a34a"][i % 4]} />;
+        })}
         <Heater />
       </G>
     ) : (
       <G>
-        <Path d="M0 190c50-4 100 2 150-1s100-5 150 0 70 3 100 0V210H0z" fill="#57493b" />
-        {[[12, 198, "#8b7d6b"], [40, 204, "#a89b86"], [70, 196, "#6b5d4d"], [104, 202, "#8b7d6b"], [140, 198, "#a89b86"], [176, 204, "#6b5d4d"], [210, 196, "#8b7d6b"], [250, 202, "#a89b86"], [286, 198, "#6b5d4d"], [330, 204, "#8b7d6b"], [366, 198, "#a89b86"], [392, 204, "#6b5d4d"]].map(([cx, cy, f], i) => <Ellipse key={i} cx={cx as number} cy={cy as number} rx={3.2} ry={2.2} fill={f as string} />)}
+        <Path d="M0 190c50-4 100 2 150-1s100-5 150 0 70 3 100 0V210H0z" fill="#5a4b3c" />
+        {Array.from({ length: 34 }).map((_, i) => {
+          const x = (i * 400) / 34 + rnd(i, 51) * 8, y = 194 + rnd(i, 52) * 9, r = 2.4 + rnd(i, 53) * 3;
+          const c = ["#8b7d6b", "#a89b86", "#6b5d4d", "#9c8f7a", "#7a6d5c"][i % 5];
+          return <G key={i}><Ellipse cx={x} cy={y} rx={r} ry={r * 0.66} fill={c} /><Ellipse cx={x - r * 0.25} cy={y - r * 0.25} rx={r * 0.4} ry={r * 0.2} fill="#ffffff" opacity={0.12} /></G>;
+        })}
         <Heater />
       </G>
     ) },
@@ -285,9 +388,11 @@ function SceneLayer({ layer, w, h, sc, offX, offY }: { layer: Layer; w: number; 
   const sw = layer.sway;
   useEffect(() => {
     if (!sw) return;
-    t.value = withRepeat(withSequence(withTiming(1, { duration: sw.dur, easing: Easing.inOut(Easing.sin) }), withTiming(-1, { duration: sw.dur, easing: Easing.inOut(Easing.sin) })), -1, true);
+    t.value = withDelay(sw.delay || 0, withRepeat(withSequence(withTiming(1, { duration: sw.dur, easing: Easing.inOut(Easing.sin) }), withTiming(-1, { duration: sw.dur, easing: Easing.inOut(Easing.sin) })), -1, true));
   }, []);
-  const a = useAnimatedStyle(() => ({ transform: [{ rotate: `${sw ? t.value * sw.deg : 0}deg` }] as Transform }));
+  const a = useAnimatedStyle(() => ({
+    transform: [sw?.bend ? { skewX: `${t.value * sw.deg}deg` } : { rotate: `${sw ? t.value * sw.deg : 0}deg` }] as Transform,
+  }));
   const svg = (
     <Svg width={w} height={h}>
       <Defs>
